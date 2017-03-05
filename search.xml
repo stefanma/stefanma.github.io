@@ -5,7 +5,7 @@
     
     <entry>
       <title><![CDATA[设计模式之单例模式]]></title>
-      <url>https://stefanma.github.io/2017/03/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</url>
+      <url>https://stefanma.github.io/2016/09/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/</url>
       <content type="html"><![CDATA[<h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><p>单例模式是项目中的设计模式最普遍使用的模式之一。它是一种对象创建的模式，用于产生一个对象的具体实例，可以确保系统中一个类只产生一个实例。<br>有2大好处：<br>（1）对于频繁使用的对象，可以省略创建对象所花费的时间，对于那些重量级的对象而言，是一笔非常客观的系统开销；<br>（2）由于new的操作次数减少，因而对系统内存的使用频率也会降低，这将会减轻GC的压力，缩短GC停顿的时间；<br>对于系统的关键组件和被频繁使用的对象，使用单例可以有效的改善系统性能。</p>
 <h3 id="单例类的角色："><a href="#单例类的角色：" class="headerlink" title="单例类的角色："></a>单例类的角色：</h3><table>
 <thead>
@@ -58,7 +58,7 @@
     
     <entry>
       <title><![CDATA[分布式锁的基本原理]]></title>
-      <url>https://stefanma.github.io/2017/03/03/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
+      <url>https://stefanma.github.io/2016/09/03/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/</url>
       <content type="html"><![CDATA[<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>目前几乎很多大型网站及应用都是分布式部署的，分布式场景中的数据一致性问题一直是一个比较重要的话题。为了保证数据的最终一致性，需要很多的技术方案来支持，比如分布式事务、分布式锁等。分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往<strong>需要互斥来防止彼此干扰来保证一致性</strong>。</p>
 <h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>1.假设有一个进程A，每小时准点给用户发送一条短信”Hello world”，为了高可用，就必须在多台机器上面部署多个进程，避免宕机的情况。<br>2.假设部署在两台机器，那么问题来了，用户每个小时就会收到两条”Hello world”，信息就重复了<br>3.我们希望只发送一条”Hello world”，那么就可以引入分布式锁的概念了。<br>4.进程A和进程B发送短信前先去注册一个锁，假设进程A抢到了锁，进程B就等待结果，如果发送成功了，那么就B就放弃此次任务，等待下一个小时。<br>5.问题的核心就在于怎么注册锁，检查锁的存在和注册锁是一个原子性操作，类似MySQL的主键，存在则不能insert，就说是你不能把我的锁覆盖了，你得等着。<br>6.我们有多种方式可以实现分布式锁，最简单的就是以每小时准点这个时间作为主键，到MySQL写入一条数据，利用数据库来维持一致性。</p>
 <h2 id="针对分布式锁的实现，目前比较常用的有以下几种方案："><a href="#针对分布式锁的实现，目前比较常用的有以下几种方案：" class="headerlink" title="针对分布式锁的实现，目前比较常用的有以下几种方案："></a>针对分布式锁的实现，目前比较常用的有以下几种方案：</h2><p>1.基于数据库实现分布式锁<br>2.基于缓存（redis，memcached）实现分布式锁<br>3.基于Zookeeper实现分布式锁</p>
@@ -83,8 +83,9 @@
     
     <entry>
       <title><![CDATA[Hello World]]></title>
-      <url>https://stefanma.github.io/2016/10/03/hello-world/</url>
+      <url>https://stefanma.github.io/2016/05/03/hello-world/</url>
       <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
+<a id="more"></a> 
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
 <h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
