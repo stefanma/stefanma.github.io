@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-03-05T13:36:48.638Z</updated>
+  <updated>2017-03-05T13:49:51.756Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -17,10 +17,10 @@
   
   <entry>
     <title>设计模式之单例模式</title>
-    <link href="https://stefanma.github.io/2017/03/05/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"/>
-    <id>https://stefanma.github.io/2017/03/05/设计模式之单例模式/</id>
-    <published>2017-03-05T12:33:08.000Z</published>
-    <updated>2017-03-05T13:36:48.638Z</updated>
+    <link href="https://stefanma.github.io/2017/03/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"/>
+    <id>https://stefanma.github.io/2017/03/04/设计模式之单例模式/</id>
+    <published>2017-03-04T02:33:08.000Z</published>
+    <updated>2017-03-05T13:49:51.756Z</updated>
     
     <content type="html"><![CDATA[<h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><p>单例模式是项目中的设计模式最普遍使用的模式之一。它是一种对象创建的模式，用于产生一个对象的具体实例，可以确保系统中一个类只产生一个实例。<br>有2大好处：<br>（1）对于频繁使用的对象，可以省略创建对象所花费的时间，对于那些重量级的对象而言，是一笔非常客观的系统开销；<br>（2）由于new的操作次数减少，因而对系统内存的使用频率也会降低，这将会减轻GC的压力，缩短GC停顿的时间；<br>对于系统的关键组件和被频繁使用的对象，使用单例可以有效的改善系统性能。</p>
 <h3 id="单例类的角色："><a href="#单例类的角色：" class="headerlink" title="单例类的角色："></a>单例类的角色：</h3><table>
@@ -41,12 +41,16 @@
 </tr>
 </tbody>
 </table>
-<p>单例模式的核心是通过一个接口返回唯一的一个对象实例。一个简单的实现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"Singleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Singleton instance = <span class="keyword">new</span> Singleton();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="单例的实现："><a href="#单例的实现：" class="headerlink" title="单例的实现："></a>单例的实现：</h3><p>单例模式的核心是通过一个接口返回唯一的一个对象实例。一个简单的实现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"Singleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Singleton instance = <span class="keyword">new</span> Singleton();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>首先单例类必须有一个private访问级别的构造函数，只有这样，才能保证单例不会被系统中其他代码内被实例化，这一点是相当重要的；其次instance成员变量和getInstance()方法必须是static的。<br>它唯一不足的地方是无法对instance做延迟加载。假如单例的创建过程很慢，而由于instance成员变量是static定义的，因此在JVM加载单例类的时候，单例对象会被创建，如果此时，这个单例类在系统中扮演其他角色，那么在任何使用这个单例类的地方都会初始化这个单例变量，而不管是否被用到。</p>
 <p>为了解决这个问题，并以此来提高系统在相关函数调用时的反应速度，就需要加入延迟加载机制。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LazySingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">LazySingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"LazySingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> LazySingleton instance = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> LazySingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == instance)&#123;</div><div class="line">            instance = <span class="keyword">new</span> LazySingleton();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>使用上例中的单例实现，虽然实现了延迟加载的功能，但是和第一种方法相比，它引入了同步关键字，以此在多线程环境中，它的耗时会远远大于第一种的单例的实现。</p>
 <p>为了使用延迟加载而引入同步关键字反而降低了系统性能，是不是有点得不偿失？<br>为了解决这个问题，对其进行改造：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StaticSingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">StaticSingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"StaticSingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonHolder</span> </span>&#123;</div><div class="line">        <span class="keyword">private</span> <span class="keyword">static</span> StaticSingleton instance = <span class="keyword">new</span> StaticSingleton();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> StaticSingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> SingletonHolder.instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>在这个实现中，单例模式使用内部类来维护单例的实例，当StaticSingleton被加载时，其内部类不会被初始化，故此可以确保StaticSingleton类被加载到JVM时，不会初始化单例类，而当getInstance()方法被调用时，才会加载SingletonHolder，从而初始化instance，同时，实例的创建是在类加载的时候完成的，故天生对多线程是友好的，getInstance()也不需要加同步关键字。这种方式兼顾以上两种实现的优点。</p>
+<p><strong>注意：</strong></p>
+<blockquote>
+<p>使用内部类的方式实现单例，既可以做到延迟加载，也不必使用同步关键字，是一种比较完善的实现。</p>
+</blockquote>
 ]]></content>
     
     <summary type="html">
@@ -55,7 +59,7 @@
     
     </summary>
     
-      <category term="设计模式" scheme="https://stefanma.github.io/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
+      <category term="设计模式" scheme="https://stefanma.github.io/categories/designpattern/"/>
     
     
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
@@ -67,11 +71,38 @@
   </entry>
   
   <entry>
+    <title>分布式锁的基本原理</title>
+    <link href="https://stefanma.github.io/2017/03/03/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/"/>
+    <id>https://stefanma.github.io/2017/03/03/分布式锁的基本原理/</id>
+    <published>2017-03-03T03:27:57.000Z</published>
+    <updated>2017-03-05T13:49:36.455Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>目前几乎很多大型网站及应用都是分布式部署的，分布式场景中的数据一致性问题一直是一个比较重要的话题。为了保证数据的最终一致性，需要很多的技术方案来支持，比如分布式事务、分布式锁等。分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往<strong>需要互斥来防止彼此干扰来保证一致性</strong>。</p>
+<h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>1.假设有一个进程A，每小时准点给用户发送一条短信”Hello world”，为了高可用，就必须在多台机器上面部署多个进程，避免宕机的情况。<br>2.假设部署在两台机器，那么问题来了，用户每个小时就会收到两条”Hello world”，信息就重复了<br>3.我们希望只发送一条”Hello world”，那么就可以引入分布式锁的概念了。<br>4.进程A和进程B发送短信前先去注册一个锁，假设进程A抢到了锁，进程B就等待结果，如果发送成功了，那么就B就放弃此次任务，等待下一个小时。<br>5.问题的核心就在于怎么注册锁，检查锁的存在和注册锁是一个原子性操作，类似MySQL的主键，存在则不能insert，就说是你不能把我的锁覆盖了，你得等着。<br>6.我们有多种方式可以实现分布式锁，最简单的就是以每小时准点这个时间作为主键，到MySQL写入一条数据，利用数据库来维持一致性。</p>
+<h2 id="针对分布式锁的实现，目前比较常用的有以下几种方案："><a href="#针对分布式锁的实现，目前比较常用的有以下几种方案：" class="headerlink" title="针对分布式锁的实现，目前比较常用的有以下几种方案："></a>针对分布式锁的实现，目前比较常用的有以下几种方案：</h2><p>1.基于数据库实现分布式锁<br>2.基于缓存（redis，memcached）实现分布式锁<br>3.基于Zookeeper实现分布式锁</p>
+]]></content>
+    
+    <summary type="html">
+    
+      分布式锁的基本原理的理解和描述
+    
+    </summary>
+    
+      <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
+    
+    
+      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Hello World</title>
-    <link href="https://stefanma.github.io/2017/03/04/hello-world/"/>
-    <id>https://stefanma.github.io/2017/03/04/hello-world/</id>
-    <published>2017-03-04T10:29:18.873Z</published>
-    <updated>2017-03-04T10:30:22.689Z</updated>
+    <link href="https://stefanma.github.io/2016/10/03/hello-world/"/>
+    <id>https://stefanma.github.io/2016/10/03/hello-world/</id>
+    <published>2016-10-03T13:27:57.000Z</published>
+    <updated>2017-03-05T13:49:23.687Z</updated>
     
     <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
@@ -90,33 +121,6 @@
     
     </summary>
     
-    
-  </entry>
-  
-  <entry>
-    <title>分布式锁的基本原理</title>
-    <link href="https://stefanma.github.io/2017/03/03/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/"/>
-    <id>https://stefanma.github.io/2017/03/03/分布式锁的基本原理/</id>
-    <published>2017-03-03T13:27:57.000Z</published>
-    <updated>2017-03-04T14:25:21.831Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>目前几乎很多大型网站及应用都是分布式部署的，分布式场景中的数据一致性问题一直是一个比较重要的话题。为了保证数据的最终一致性，需要很多的技术方案来支持，比如分布式事务、分布式锁等。分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往<strong>需要互斥来防止彼此干扰来保证一致性</strong>。</p>
-<h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>1.假设有一个进程A，每小时准点给用户发送一条短信”Hello world”，为了高可用，就必须在多台机器上面部署多个进程，避免宕机的情况。<br>2.假设部署在两台机器，那么问题来了，用户每个小时就会收到两条”Hello world”，信息就重复了<br>3.我们希望只发送一条”Hello world”，那么就可以引入分布式锁的概念了。<br>4.进程A和进程B发送短信前先去注册一个锁，假设进程A抢到了锁，进程B就等待结果，如果发送成功了，那么就B就放弃此次任务，等待下一个小时。<br>5.问题的核心就在于怎么注册锁，检查锁的存在和注册锁是一个原子性操作，类似MySQL的主键，存在则不能insert，就说是你不能把我的锁覆盖了，你得等着。<br>6.我们有多种方式可以实现分布式锁，最简单的就是以每小时准点这个时间作为主键，到MySQL写入一条数据，利用数据库来维持一致性。</p>
-<h2 id="针对分布式锁的实现，目前比较常用的有以下几种方案："><a href="#针对分布式锁的实现，目前比较常用的有以下几种方案：" class="headerlink" title="针对分布式锁的实现，目前比较常用的有以下几种方案："></a>针对分布式锁的实现，目前比较常用的有以下几种方案：</h2><p>1.基于数据库实现分布式锁<br>2.基于缓存（redis，memcached）实现分布式锁<br>3.基于Zookeeper实现分布式锁</p>
-]]></content>
-    
-    <summary type="html">
-    
-      分布式锁的基本原理的理解和描述
-    
-    </summary>
-    
-      <category term="分布式" scheme="https://stefanma.github.io/categories/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
-    
-    
-      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
-    
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
   </entry>
   
