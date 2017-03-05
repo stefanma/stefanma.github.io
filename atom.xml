@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-03-04T10:30:22.689Z</updated>
+  <updated>2017-03-05T13:36:48.638Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -14,6 +14,57 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>设计模式之单例模式</title>
+    <link href="https://stefanma.github.io/2017/03/05/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"/>
+    <id>https://stefanma.github.io/2017/03/05/设计模式之单例模式/</id>
+    <published>2017-03-05T12:33:08.000Z</published>
+    <updated>2017-03-05T13:36:48.638Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><p>单例模式是项目中的设计模式最普遍使用的模式之一。它是一种对象创建的模式，用于产生一个对象的具体实例，可以确保系统中一个类只产生一个实例。<br>有2大好处：<br>（1）对于频繁使用的对象，可以省略创建对象所花费的时间，对于那些重量级的对象而言，是一笔非常客观的系统开销；<br>（2）由于new的操作次数减少，因而对系统内存的使用频率也会降低，这将会减轻GC的压力，缩短GC停顿的时间；<br>对于系统的关键组件和被频繁使用的对象，使用单例可以有效的改善系统性能。</p>
+<h3 id="单例类的角色："><a href="#单例类的角色：" class="headerlink" title="单例类的角色："></a>单例类的角色：</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">角色</th>
+<th style="text-align:center">作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">单例者</td>
+<td style="text-align:center">提供单例工厂，返回单例</td>
+</tr>
+<tr>
+<td style="text-align:center">使用者</td>
+<td style="text-align:center">获取并使用单例类</td>
+</tr>
+</tbody>
+</table>
+<p>单例模式的核心是通过一个接口返回唯一的一个对象实例。一个简单的实现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"Singleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Singleton instance = <span class="keyword">new</span> Singleton();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>首先单例类必须有一个private访问级别的构造函数，只有这样，才能保证单例不会被系统中其他代码内被实例化，这一点是相当重要的；其次instance成员变量和getInstance()方法必须是static的。<br>它唯一不足的地方是无法对instance做延迟加载。假如单例的创建过程很慢，而由于instance成员变量是static定义的，因此在JVM加载单例类的时候，单例对象会被创建，如果此时，这个单例类在系统中扮演其他角色，那么在任何使用这个单例类的地方都会初始化这个单例变量，而不管是否被用到。</p>
+<p>为了解决这个问题，并以此来提高系统在相关函数调用时的反应速度，就需要加入延迟加载机制。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LazySingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">LazySingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"LazySingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> LazySingleton instance = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> LazySingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == instance)&#123;</div><div class="line">            instance = <span class="keyword">new</span> LazySingleton();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>使用上例中的单例实现，虽然实现了延迟加载的功能，但是和第一种方法相比，它引入了同步关键字，以此在多线程环境中，它的耗时会远远大于第一种的单例的实现。</p>
+<p>为了使用延迟加载而引入同步关键字反而降低了系统性能，是不是有点得不偿失？<br>为了解决这个问题，对其进行改造：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StaticSingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">StaticSingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"StaticSingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonHolder</span> </span>&#123;</div><div class="line">        <span class="keyword">private</span> <span class="keyword">static</span> StaticSingleton instance = <span class="keyword">new</span> StaticSingleton();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> StaticSingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> SingletonHolder.instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>在这个实现中，单例模式使用内部类来维护单例的实例，当StaticSingleton被加载时，其内部类不会被初始化，故此可以确保StaticSingleton类被加载到JVM时，不会初始化单例类，而当getInstance()方法被调用时，才会加载SingletonHolder，从而初始化instance，同时，实例的创建是在类加载的时候完成的，故天生对多线程是友好的，getInstance()也不需要加同步关键字。这种方式兼顾以上两种实现的优点。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      单例模式的理解和应用
+    
+    </summary>
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
+    
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
+    
+      <category term="设计优化" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96/"/>
+    
+  </entry>
   
   <entry>
     <title>Hello World</title>
