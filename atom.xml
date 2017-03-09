@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-03-05T14:50:00.395Z</updated>
+  <updated>2017-03-09T09:02:15.353Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -14,6 +14,53 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Linux查找命令小记</title>
+    <link href="https://stefanma.github.io/2016/09/09/Linux%E6%9F%A5%E6%89%BE%E5%91%BD%E4%BB%A4%E5%B0%8F%E8%AE%B0/"/>
+    <id>https://stefanma.github.io/2016/09/09/Linux查找命令小记/</id>
+    <published>2016-09-09T07:37:33.000Z</published>
+    <updated>2017-03-09T09:02:15.353Z</updated>
+    
+    <content type="html"><![CDATA[<p><strong>小记</strong><br>在Linux系统中查找文件，定位相关的路径是攻城狮们经常遇到的，Linux就向是一个相当大的仓库，需要及时的准确的找到自己想要的路径和文件，那就需要比较好的搜索工具；搜索工具好不好关系到定位问题的精准和效率。今天在DEV环境需要查找自己很久之前部署的Redis，文件路径由于时间比较久远已经忘记了，怎么精确的快速找到自己部署的应用。经历了一段小的寻找路程，虽然耗时不是那么多的时间，记录下来以便自己和看这篇文章的同学参考。</p>
+<h2 id="查找Redis部署路径"><a href="#查找Redis部署路径" class="headerlink" title="查找Redis部署路径"></a>查找Redis部署路径</h2><p>(1)首先我要确保我用的这台服务器上确实有Redis在运行着；<br>查看如下图命令和操作：<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# ps -ef|grep redis</div><div class="line">root      5705     1  0  2016 ?        05:32:56 ./redis-server *:6379    </div><div class="line">root     30763 29277  0 16:52 pts/3    00:00:00 grep redis</div><div class="line">[root@vm-test01 /]#</div></pre></td></tr></table></figure></p>
+<p>(2)使用find命令<br>查看如下图命令和操作：<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# find / -name redis-server</div><div class="line">/home/redis/redis-server</div></pre></td></tr></table></figure></p>
+<h2 id="Linux查找命令"><a href="#Linux查找命令" class="headerlink" title="Linux查找命令"></a>Linux查找命令</h2><p><strong>可以使用下面的一些命令来搜索：</strong><br><code>which        查看可执行文件的位置</code><br><code>whereis      查看文件的位置</code><br><code>locate       配合数据库查看文件位置</code><br><code>find         实际搜寻硬盘查询文件名称</code></p>
+<h3 id="Linux查找命令详解"><a href="#Linux查找命令详解" class="headerlink" title="Linux查找命令详解"></a>Linux查找命令详解</h3><p>1.which<br>语法: which 可执行文件名称</p>
+<figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]#  which passwd</div><div class="line">/usr/bin/passwd</div></pre></td></tr></table></figure>
+<blockquote>
+<p>which是通过 PATH环境变量到该路径内查找可执行文件，所以基本的功能是<code>寻找可执行文件</code>.</p>
+</blockquote>
+<p>2.whereis<br>语法: whereis [-bmsu] 文件或者目录名称<br>参数说明：<br>-b: 只找二进制文件<br>-m: 只找在说明文件manual路径下的文件<br>-s: 只找source源文件<br>-u: 没有说明文档的文件</p>
+<p>将和passwd文件相关的文件都查找出来<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]#  whereis passwd</div><div class="line">passwd: /usr/bin/passwd /etc/passwd /usr/share/man/man1/passwd.1.gz /usr/share/man/man5/passwd.5.gz</div></pre></td></tr></table></figure></p>
+<p>只将二进制文件查找出来<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# whereis -b passwd</div><div class="line">passwd: /usr/bin/passwd /etc/passwd</div></pre></td></tr></table></figure></p>
+<blockquote>
+<p>和find相比，whereis查找的速度非常快，这是因为linux系统会将 系统内的所有文件都记录在一个数据库文件中，当使用whereis和locate时，会从数据库中查找数据，而不是像find命令那样，通 过遍历硬盘来查找，效率自然会很高。但是该数据库文件并不是实时更新，默认情况下时一星期更新一次，因此，我们在用whereis和locate查找文件时，有时会找到已经被删除的数据，或者刚刚建立文件，却无法查找到，原因就是因为数据库文件没有被更新。</p>
+</blockquote>
+<p>3.locate<br>语法: locate 文件或者目录名称</p>
+<figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]#  locate redis</div><div class="line">/home/quartz/webapps/quartz-service/WEB-INF/classes/spring/applicationContext-redis.xml</div><div class="line">/home/redis/dump.rdb</div><div class="line">/home/redis/redis-benchmark</div><div class="line">/home/redis/redis-cli</div><div class="line">/home/redis/redis-server</div><div class="line">/home/redis/redis.conf</div><div class="line">/home/redis/redis.pid</div><div class="line">/home/redis/redis1.conf</div><div class="line">/home/redis/redis_init_script</div><div class="line">/home/redis/temp-12938.rdb</div><div class="line">/home/redis/temp-3575.rdb</div><div class="line">···············</div></pre></td></tr></table></figure>
+<p>4.find<br>语法: find 路径 参数<br>参数说明：<br>时间查找参数：<br>-atime n :将n<em>24小时内存取过的的文件列出来<br>-ctime n :将n</em>24小时内改变、新增的文件或者目录列出来<br>-mtime n :将n*24小时内修改过的文件或者目录列出来<br>-newer file :把比file还要新的文件列出来</p>
+<p>名称查找参数：<br>-gid n       :寻找群组ID为n的文件<br>-group name  :寻找群组名称为name的文件<br>-uid n       :寻找拥有者ID为n的文件<br>-user name   :寻找用户者名称为name的文件<br>-name file   :寻找文件名为file的文件（可以使用通配符）</p>
+<figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# find / -name redis-server</div><div class="line">/home/redis/redis-server</div></pre></td></tr></table></figure>
+<blockquote>
+<p>find命令所查找的目录路径，是在硬盘上遍历查找，因此非常消耗硬盘的资源，而且效率也非常低。</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      Linux查找命令的区别
+    
+    </summary>
+    
+      <category term="Linux" scheme="https://stefanma.github.io/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="https://stefanma.github.io/tags/Linux/"/>
+    
+      <category term="Redis" scheme="https://stefanma.github.io/tags/Redis/"/>
+    
+  </entry>
   
   <entry>
     <title>设计模式之单例模式</title>
