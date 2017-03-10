@@ -63,6 +63,37 @@
   </entry>
   
   <entry>
+    <title>让MySQL支持中文排序的实现方法</title>
+    <link href="https://stefanma.github.io/2016/09/07/%E8%AE%A9MySQL%E6%94%AF%E6%8C%81%E4%B8%AD%E6%96%87%E6%8E%92%E5%BA%8F%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95/"/>
+    <id>https://stefanma.github.io/2016/09/07/让MySQL支持中文排序的实现方法/</id>
+    <published>2016-09-07T02:57:36.000Z</published>
+    <updated>2017-03-10T11:16:25.597Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="让MySQL支持中文排序"><a href="#让MySQL支持中文排序" class="headerlink" title="让MySQL支持中文排序"></a>让MySQL支持中文排序</h2><p>如果在mysql中使用字符集为utf8，想要对中文字段用order by chinese_field 排序，那么出来的顺序并不是按照拼音排序的，不是我们想要的结果。</p>
+<h2 id="实现方法"><a href="#实现方法" class="headerlink" title="实现方法"></a>实现方法</h2><h3 id="（1）方案一"><a href="#（1）方案一" class="headerlink" title="（1）方案一"></a>（1）方案一</h3><p>对于包含中文的字段加上”binary”属性，使之作为二进制比较，例如将”name char(10)”改成”name char(10)binary”。<br>如果使用源码编译MySQL，可以编译MySQL时使用 –with–charset=gbk 参数，这样MySQL就会直接支持中文查找和排序。也可以用 extra-charsets=gb2312,gbk 来加入多个字符集。</p>
+<h3 id="（2）方案二"><a href="#（2）方案二" class="headerlink" title="（2）方案二"></a>（2）方案二</h3><p>可以在查询语句的order by部分使用 CONVERT 函数<br>对中文字段使用gbk编码排序：</p>
+<blockquote>
+<p>SELECT * FROM table ORDER BY CONVERT(chinese_field USING gbk );</p>
+</blockquote>
+<p>当然这需要你安装mysql时安装了gbk字符集，不然会报错：#1115 - Unknown character set: ‘gbk’</p>
+]]></content>
+    
+    <summary type="html">
+    
+      MySQL中文排序方法
+    
+    </summary>
+    
+      <category term="MySQL" scheme="https://stefanma.github.io/categories/mysql/"/>
+    
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+      <category term="MySQL" scheme="https://stefanma.github.io/tags/MySQL/"/>
+    
+  </entry>
+  
+  <entry>
     <title>设计模式之单例模式</title>
     <link href="https://stefanma.github.io/2016/09/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B9%8B%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/"/>
     <id>https://stefanma.github.io/2016/09/04/设计模式之单例模式/</id>
