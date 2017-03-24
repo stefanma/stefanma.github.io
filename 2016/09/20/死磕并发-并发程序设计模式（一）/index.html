@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Java,设计模式,设计优化," />
+  <meta name="keywords" content="Java,设计模式," />
 
 
 
@@ -86,16 +86,20 @@
 
 
 
-<meta name="description" content="单例模式的理解和应用">
+<meta name="description" content="并发程序的Future模式">
 <meta property="og:type" content="article">
-<meta property="og:title" content="设计模式之单例模式">
-<meta property="og:url" content="https://stefanma.github.io/2016/09/04/设计模式之单例模式/index.html">
+<meta property="og:title" content="死磕并发--并发程序设计模式（一）">
+<meta property="og:url" content="https://stefanma.github.io/2016/09/20/死磕并发-并发程序设计模式（一）/index.html">
 <meta property="og:site_name" content="Stefan's Room">
-<meta property="og:description" content="单例模式的理解和应用">
-<meta property="og:updated_time" content="2017-03-05T14:50:00.395Z">
+<meta property="og:description" content="并发程序的Future模式">
+<meta property="og:image" content="https://stefanma.github.io/img/future_model_0.png">
+<meta property="og:image" content="https://stefanma.github.io/img/future_model_1.png">
+<meta property="og:image" content="https://stefanma.github.io/img/future_model_2.png">
+<meta property="og:updated_time" content="2017-03-24T12:30:49.642Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="设计模式之单例模式">
-<meta name="twitter:description" content="单例模式的理解和应用">
+<meta name="twitter:title" content="死磕并发--并发程序设计模式（一）">
+<meta name="twitter:description" content="并发程序的Future模式">
+<meta name="twitter:image" content="https://stefanma.github.io/img/future_model_0.png">
 
 
 
@@ -123,13 +127,13 @@
 
 
 
-  <link rel="canonical" href="https://stefanma.github.io/2016/09/04/设计模式之单例模式/"/>
+  <link rel="canonical" href="https://stefanma.github.io/2016/09/20/死磕并发-并发程序设计模式（一）/"/>
 
 
 
 
 
-  <title> 设计模式之单例模式 | Stefan's Room </title>
+  <title> 死磕并发--并发程序设计模式（一） | Stefan's Room </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -295,7 +299,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/09/04/设计模式之单例模式/">
+  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/09/20/死磕并发-并发程序设计模式（一）/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Stefan Ma">
@@ -319,7 +323,7 @@
             
             
               
-                设计模式之单例模式
+                死磕并发--并发程序设计模式（一）
               
             
           </h1>
@@ -334,8 +338,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-04T10:33:08+08:00">
-                2016-09-04
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-20T17:30:25+08:00">
+                2016-09-20
               </time>
             
 
@@ -357,8 +361,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/designpattern/" itemprop="url" rel="index">
-                    <span itemprop="name">设计模式</span>
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
                   </a>
                 </span>
 
@@ -381,7 +385,7 @@
 
           
               <div class="post-description">
-                  单例模式的理解和应用
+                  并发程序的Future模式
               </div>
           
 
@@ -396,35 +400,19 @@
       
 
       
-        <h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><p>单例模式是项目中的设计模式最普遍使用的模式之一。它是一种对象创建的模式，用于产生一个对象的具体实例，可以确保系统中一个类只产生一个实例。<br>有2大好处：<br>（1）对于频繁使用的对象，可以省略创建对象所花费的时间，对于那些重量级的对象而言，是一笔非常客观的系统开销；<br>（2）由于new的操作次数减少，因而对系统内存的使用频率也会降低，这将会减轻GC的压力，缩短GC停顿的时间；<br>对于系统的关键组件和被频繁使用的对象，使用单例可以有效的改善系统性能。</p>
-<h3 id="单例类的角色："><a href="#单例类的角色：" class="headerlink" title="单例类的角色："></a>单例类的角色：</h3><table>
-<thead>
-<tr>
-<th style="text-align:center">角色</th>
-<th style="text-align:center">作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">单例者</td>
-<td style="text-align:center">提供单例工厂，返回单例</td>
-</tr>
-<tr>
-<td style="text-align:center">使用者</td>
-<td style="text-align:center">获取并使用单例类</td>
-</tr>
-</tbody>
-</table>
-<h3 id="单例的实现："><a href="#单例的实现：" class="headerlink" title="单例的实现："></a>单例的实现：</h3><p>单例模式的核心是通过一个接口返回唯一的一个对象实例。一个简单的实现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"Singleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Singleton instance = <span class="keyword">new</span> Singleton();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>首先单例类必须有一个private访问级别的构造函数，只有这样，才能保证单例不会被系统中其他代码内被实例化，这一点是相当重要的；其次instance成员变量和getInstance()方法必须是static的。<br>它唯一不足的地方是无法对instance做延迟加载。假如单例的创建过程很慢，而由于instance成员变量是static定义的，因此在JVM加载单例类的时候，单例对象会被创建，如果此时，这个单例类在系统中扮演其他角色，那么在任何使用这个单例类的地方都会初始化这个单例变量，而不管是否被用到。</p>
-<p>为了解决这个问题，并以此来提高系统在相关函数调用时的反应速度，就需要加入延迟加载机制。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LazySingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">LazySingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"LazySingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> LazySingleton instance = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> LazySingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == instance)&#123;</div><div class="line">            instance = <span class="keyword">new</span> LazySingleton();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>使用上例中的单例实现，虽然实现了延迟加载的功能，但是和第一种方法相比，它引入了同步关键字，以此在多线程环境中，它的耗时会远远大于第一种的单例的实现。</p>
-<p>为了使用延迟加载而引入同步关键字反而降低了系统性能，是不是有点得不偿失？<br>为了解决这个问题，对其进行改造：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StaticSingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">StaticSingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"StaticSingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonHolder</span> </span>&#123;</div><div class="line">        <span class="keyword">private</span> <span class="keyword">static</span> StaticSingleton instance = <span class="keyword">new</span> StaticSingleton();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> StaticSingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> SingletonHolder.instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>在这个实现中，单例模式使用内部类来维护单例的实例，当StaticSingleton被加载时，其内部类不会被初始化，故此可以确保StaticSingleton类被加载到JVM时，不会初始化单例类，而当getInstance()方法被调用时，才会加载SingletonHolder，从而初始化instance，同时，实例的创建是在类加载的时候完成的，故天生对多线程是友好的，getInstance()也不需要加同步关键字。这种方式兼顾以上两种实现的优点。</p>
-<p><strong>注意：</strong></p>
+        <h2 id="Future模式"><a href="#Future模式" class="headerlink" title="Future模式"></a>Future模式</h2><p>对于Future模式有点像期货市场的“期货”，是“对未来的一种凭证”；例如：我在期货交易中心买了期货，交钱之后，会拿到一个期货的凭证，这个凭证告诉我等XXXX年某个时候可以拿这个凭证来拿对方的物品，而现在我是没有办法拿到物品的，需要等到协定的时间来取。<br>对于程序代码来讲，实现了Future模式的客户端在程序处理任务还没有返回结果时，而是去调用了其他业务逻辑的，充分利用等待时间。在完成了对其他业务的处理后，最后再使用返回比较慢的程序数据，在整个调用过程中，就不存在了无所谓的等待，充分利用所有的时间片段，从而提高整个系统的响应速度。</p>
+<h2 id="模式流程图"><a href="#模式流程图" class="headerlink" title="模式流程图"></a>模式流程图</h2><p>基本的模式流程图<br><img src="/img/future_model_0.png" alt="模式流程图"></p>
+<h2 id="Future模式Java实现"><a href="#Future模式Java实现" class="headerlink" title="Future模式Java实现"></a>Future模式Java实现</h2><p>1.Main函数调用：<br>ApplicationTest主要是client发起请求，并返回数据。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ApplicationTest</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">		ClientMain client = <span class="keyword">new</span> ClientMain();</div><div class="line">		<span class="comment">// 这里会立即返回，因为获取的是FutureData，而非RealData</span></div><div class="line">		Data data = client.request(<span class="string">"name"</span>);</div><div class="line">		System.out.println(<span class="string">"请求完毕！"</span>);  </div><div class="line">		<span class="comment">// 这里可以用一个sleep代替对其他业务逻辑的处理</span></div><div class="line">		<span class="comment">// 在处理这些业务逻辑过程中，RealData也正在创建，从而充分了利用等待时间</span></div><div class="line">		Thread.sleep(<span class="number">2000</span>);</div><div class="line">		<span class="comment">// 使用真实数据</span></div><div class="line">		System.out.println(<span class="string">"数据="</span> + data.getResult());</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>2.ClientMain实现：<br>ClientMain主要实现了FutureData，开启构造RealData的线程，接收请求后很快的返回FutureData。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ClientMain</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> Data <span class="title">request</span><span class="params">(<span class="keyword">final</span> String string)</span> </span>&#123;</div><div class="line">		<span class="keyword">final</span> FutureData futureData = <span class="keyword">new</span> FutureData();</div><div class="line">		<span class="comment">// 开启一个新的线程来构造真实数据</span></div><div class="line">		<span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">			<span class="meta">@Override</span></div><div class="line">			<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">				<span class="comment">// RealData的构建很慢，所以放在单独的线程中运行</span></div><div class="line">				RealData realData = <span class="keyword">new</span> RealData(string);</div><div class="line">				futureData.setRealData(realData);</div><div class="line">			&#125;</div><div class="line">		&#125;).start();</div><div class="line"></div><div class="line">		<span class="keyword">return</span> futureData; <span class="comment">// 先直接返回FutureData</span></div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>3.Data的实现：<br>Data是一个接口。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Data</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">getResult</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>4.FutureData的实现：<br>FutureData实现了一个快速返回的RealData的包装。当使用FutureData的getResult()方法时，程序会阻塞，等待RealData被注入到程序中，才使用RealData的getResult()方法。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//FutureData是Future模式的关键，它实际上是真实数据RealData的代理，封装了获取RealData的等待过程</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FutureData</span> <span class="keyword">implements</span> <span class="title">Data</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="comment">// FutureData是RealData的封装</span></div><div class="line">	RealData realData = <span class="keyword">null</span>;</div><div class="line">	<span class="comment">// 是否已经准备好</span></div><div class="line">	<span class="keyword">boolean</span> isReady = <span class="keyword">false</span>;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">setRealData</span><span class="params">(RealData realData)</span> </span>&#123;</div><div class="line">		<span class="keyword">if</span> (isReady)&#123;</div><div class="line">			<span class="keyword">return</span>;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">this</span>.realData = realData;</div><div class="line">		isReady = <span class="keyword">true</span>;</div><div class="line">		notifyAll(); <span class="comment">// RealData已经被注入到FutureData中了，通知getResult()方法</span></div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> String <span class="title">getResult</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">		<span class="keyword">while</span> (!isReady) &#123;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				wait();</div><div class="line">			&#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line"></div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">return</span> realData.getResult();</div><div class="line">	&#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>5.RealData实现：<br>RealData是最终需要使用的数据模型，构造速度比较慢。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RealData</span> <span class="keyword">implements</span> <span class="title">Data</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">protected</span> String data;</div><div class="line">	</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">RealData</span><span class="params">(String data)</span> </span>&#123;</div><div class="line">    	<span class="comment">//RealData的构建过程可能会很慢，需要用户等很长的时间</span></div><div class="line">    	System.out.println(<span class="string">"RealData data:"</span>+data);</div><div class="line">    	StringBuffer sb = <span class="keyword">new</span> StringBuffer();</div><div class="line">    	<span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;<span class="number">20</span>;i++)&#123;</div><div class="line">            <span class="keyword">try</span> &#123;</div><div class="line">            	sb.append(<span class="string">"++"</span>+data);</div><div class="line">                Thread.sleep(<span class="number">200</span>);</div><div class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">                e.printStackTrace();</div><div class="line">            &#125;</div><div class="line">    	&#125;</div><div class="line"></div><div class="line">        <span class="keyword">this</span>.data = sb.toString();</div><div class="line">    &#125;</div><div class="line">	</div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">getResult</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</div><div class="line">		 <span class="keyword">return</span> data;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2 id="JDK内置的实现"><a href="#JDK内置的实现" class="headerlink" title="JDK内置的实现"></a>JDK内置的实现</h2><p>在JDK自带的实现中，有关实现Future模式的核心结构如图:<br><img src="/img/future_model_1.png" alt="Future模式的核心结构图"></p>
+<p>FutureTask是最为重要的模块，实现了RunnableFuture接口，而RunnableFuture继承Runnable和Future，实现了Runnable的接口，作为单独的线程运行。在run()的方法中维护了Callable，并维护该对象返回的对象。当FutureTask.get()方法时，将返回Callable接口的返回对象。<br><img src="/img/future_model_2.png" alt="JDK代码"></p>
 <blockquote>
-<p>使用内部类的方式实现单例，既可以做到延迟加载，也不必使用同步关键字，是一种比较完善的实现。</p>
+<p>Future模式的核心是在于：去除了主函数的等待时间，并使得原本需要等待的时间段可以用于处理其他业务逻辑，从而充分的利用计算机资源。</p>
 </blockquote>
+<h2 id="FutureTask使用场景"><a href="#FutureTask使用场景" class="headerlink" title="FutureTask使用场景"></a>FutureTask使用场景</h2><p>未完待续……</p>
 
       
     </div>
@@ -452,8 +440,6 @@
           
             <a href="/tags/设计模式/" rel="tag"># 设计模式</a>
           
-            <a href="/tags/设计优化/" rel="tag"># 设计优化</a>
-          
         </div>
       
 
@@ -461,8 +447,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/09/03/分布式锁的基本原理/" rel="next" title="分布式锁的基本原理">
-                <i class="fa fa-chevron-left"></i> 分布式锁的基本原理
+              <a href="/2016/09/09/Linux查找命令小记/" rel="next" title="Linux查找命令小记">
+                <i class="fa fa-chevron-left"></i> Linux查找命令小记
               </a>
             
           </div>
@@ -470,10 +456,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/09/07/让MySQL支持中文排序的实现方法/" rel="prev" title="让MySQL支持中文排序的实现方法">
-                让MySQL支持中文排序的实现方法 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -614,7 +596,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#单例模式"><span class="nav-number">1.</span> <span class="nav-text">单例模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单例类的角色："><span class="nav-number">1.1.</span> <span class="nav-text">单例类的角色：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#单例的实现："><span class="nav-number">1.2.</span> <span class="nav-text">单例的实现：</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Future模式"><span class="nav-number">1.</span> <span class="nav-text">Future模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模式流程图"><span class="nav-number">2.</span> <span class="nav-text">模式流程图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Future模式Java实现"><span class="nav-number">3.</span> <span class="nav-text">Future模式Java实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JDK内置的实现"><span class="nav-number">4.</span> <span class="nav-text">JDK内置的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FutureTask使用场景"><span class="nav-number">5.</span> <span class="nav-text">FutureTask使用场景</span></a></li></ol></div>
             
 
           </div>
