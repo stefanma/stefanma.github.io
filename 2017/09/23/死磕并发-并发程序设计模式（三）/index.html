@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Java,分布式," />
+  <meta name="keywords" content="设计模式,Java," />
 
 
 
@@ -86,16 +86,18 @@
 
 
 
-<meta name="description" content="分布式锁的基本原理的理解和描述">
+<meta name="description" content="并发程序的Guarded Suspension模式">
 <meta property="og:type" content="article">
-<meta property="og:title" content="分布式锁的基本原理">
-<meta property="og:url" content="https://stefanma.github.io/2016/09/03/分布式锁的基本原理/index.html">
+<meta property="og:title" content="死磕并发--并发程序设计模式（三）">
+<meta property="og:url" content="https://stefanma.github.io/2017/09/23/死磕并发-并发程序设计模式（三）/index.html">
 <meta property="og:site_name" content="Stefan's Room">
-<meta property="og:description" content="分布式锁的基本原理的理解和描述">
-<meta property="og:updated_time" content="2017-03-05T14:49:48.098Z">
+<meta property="og:description" content="并发程序的Guarded Suspension模式">
+<meta property="og:image" content="https://stefanma.github.io/img/guarded-suspension_0.png">
+<meta property="og:updated_time" content="2017-04-13T12:18:59.396Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="分布式锁的基本原理">
-<meta name="twitter:description" content="分布式锁的基本原理的理解和描述">
+<meta name="twitter:title" content="死磕并发--并发程序设计模式（三）">
+<meta name="twitter:description" content="并发程序的Guarded Suspension模式">
+<meta name="twitter:image" content="https://stefanma.github.io/img/guarded-suspension_0.png">
 
 
 
@@ -123,13 +125,13 @@
 
 
 
-  <link rel="canonical" href="https://stefanma.github.io/2016/09/03/分布式锁的基本原理/"/>
+  <link rel="canonical" href="https://stefanma.github.io/2017/09/23/死磕并发-并发程序设计模式（三）/"/>
 
 
 
 
 
-  <title> 分布式锁的基本原理 | Stefan's Room </title>
+  <title> 死磕并发--并发程序设计模式（三） | Stefan's Room </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -295,7 +297,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/09/03/分布式锁的基本原理/">
+  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2017/09/23/死磕并发-并发程序设计模式（三）/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Stefan Ma">
@@ -319,7 +321,7 @@
             
             
               
-                分布式锁的基本原理
+                死磕并发--并发程序设计模式（三）
               
             
           </h1>
@@ -334,8 +336,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-03T11:27:57+08:00">
-                2016-09-03
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-23T17:53:10+08:00">
+                2017-09-23
               </time>
             
 
@@ -357,8 +359,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/distributed/" itemprop="url" rel="index">
-                    <span itemprop="name">分布式</span>
+                  <a href="/categories/java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
                   </a>
                 </span>
 
@@ -381,7 +383,7 @@
 
           
               <div class="post-description">
-                  分布式锁的基本原理的理解和描述
+                  并发程序的Guarded Suspension模式
               </div>
           
 
@@ -396,9 +398,18 @@
       
 
       
-        <h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>目前几乎很多大型网站及应用都是分布式部署的，分布式场景中的数据一致性问题一直是一个比较重要的话题。为了保证数据的最终一致性，需要很多的技术方案来支持，比如分布式事务、分布式锁等。分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往<strong>需要互斥来防止彼此干扰来保证一致性</strong>。</p>
-<h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>1.假设有一个进程A，每小时准点给用户发送一条短信”Hello world”，为了高可用，就必须在多台机器上面部署多个进程，避免宕机的情况。<br>2.假设部署在两台机器，那么问题来了，用户每个小时就会收到两条”Hello world”，信息就重复了<br>3.我们希望只发送一条”Hello world”，那么就可以引入分布式锁的概念了。<br>4.进程A和进程B发送短信前先去注册一个锁，假设进程A抢到了锁，进程B就等待结果，如果发送成功了，那么就B就放弃此次任务，等待下一个小时。<br>5.问题的核心就在于怎么注册锁，检查锁的存在和注册锁是一个原子性操作，类似MySQL的主键，存在则不能insert，就说是你不能把我的锁覆盖了，你得等着。<br>6.我们有多种方式可以实现分布式锁，最简单的就是以每小时准点这个时间作为主键，到MySQL写入一条数据，利用数据库来维持一致性。</p>
-<h2 id="针对分布式锁的实现，目前比较常用的有以下几种方案："><a href="#针对分布式锁的实现，目前比较常用的有以下几种方案：" class="headerlink" title="针对分布式锁的实现，目前比较常用的有以下几种方案："></a>针对分布式锁的实现，目前比较常用的有以下几种方案：</h2><p>1.基于数据库实现分布式锁<br>2.基于缓存（redis，memcached）实现分布式锁<br>3.基于Zookeeper实现分布式锁</p>
+        <h2 id="Guarded-Suspension模式"><a href="#Guarded-Suspension模式" class="headerlink" title="Guarded Suspension模式"></a>Guarded Suspension模式</h2><p>设想一个场景，服务器可能在短时间内承受大量的客户端的请求，客户端的请求数量已经超过了服务器本身的即时处理能力，而服务端又不能丢失任何一个客户请求。此时最佳的方案莫过于就是让客户端的请求进行排队，有服务端一个接一个的处理，这样即可以保证客户端所有的请求均不丢失，同时也避免服务器由于同时处理太多的请求而崩溃。<br>Guarded Suspension解释为保护暂停，核心的思想是仅当服务端进程准备好时，才会提供服务。</p>
+<h2 id="Guarded-Suspension的理解和实现"><a href="#Guarded-Suspension的理解和实现" class="headerlink" title="Guarded Suspension的理解和实现"></a>Guarded Suspension的理解和实现</h2><h3 id="Guarded-Suspension模式的结构"><a href="#Guarded-Suspension模式的结构" class="headerlink" title="Guarded Suspension模式的结构"></a>Guarded Suspension模式的结构</h3><p>Request对象封装了客户端的请求。RequestQueue表示客户端的请求队列，由ClientThread和ServerThread共同维护。其中，ClientThread负责不断的发送请求，并将请求对象放入请求队列中。ServerThread根据自身状态，在有能力的处理请求时，从RequestQueue中提取请求对象加以处理。<br>工作流程图如下：<br><img src="/img/guarded-suspension_0.png" alt="示意图"></p>
+<blockquote>
+<p>Guarded Suspension模式可以确保系统仅有在有能力处理某个任务时，才会处理该任务。当系统没有能力处理任务时，它会暂存任务信息等待系统空闲。</p>
+</blockquote>
+<h3 id="Guarded-Suspension模式的实现"><a href="#Guarded-Suspension模式的实现" class="headerlink" title="Guarded Suspension模式的实现"></a>Guarded Suspension模式的实现</h3><p><1>RequestPoJo类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RequestPoJo</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> String name;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">RequestPoJo</span><span class="params">(String name)</span> </span>&#123;</div><div class="line">		<span class="keyword">this</span>.name = name;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">return</span> name;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">return</span> <span class="string">"RequestPoJo [name="</span> + name + <span class="string">"]"</span>;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></1></p>
+<p><2>RequestQueue类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RequestQueue</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> LinkedList&lt;RequestPoJo&gt; queue = <span class="keyword">new</span> LinkedList&lt;&gt;();</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> RequestPoJo <span class="title">getRequest</span><span class="params">()</span></span>&#123;</div><div class="line">		<span class="comment">//等到新的Request加入</span></div><div class="line">		<span class="keyword">while</span>(queue.size() == <span class="number">0</span>)&#123;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				wait();</div><div class="line">			&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">				<span class="comment">// TODO Auto-generated catch block</span></div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">return</span> (RequestPoJo) queue.remove();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">addRequest</span><span class="params">(RequestPoJo request)</span></span>&#123;</div><div class="line">		<span class="comment">//添加Request</span></div><div class="line">		queue.add(request);</div><div class="line">		notifyAll();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></2></p>
+<p><3>ClientThread类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ClientThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">	</div><div class="line">	<span class="keyword">private</span> RequestQueue requestQueue;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ClientThread</span><span class="params">(RequestQueue requestQueue, String name)</span> </span>&#123;</div><div class="line">		<span class="keyword">super</span>(name);</div><div class="line">		<span class="keyword">this</span>.requestQueue = requestQueue;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</div><div class="line">			RequestPoJo request = <span class="keyword">new</span> RequestPoJo(<span class="string">"Request ID"</span>+i+<span class="string">"Thread_name:"</span>+Thread.currentThread().getName());</div><div class="line">			requestQueue.addRequest(request);</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				Thread.sleep(<span class="number">10</span>);</div><div class="line">			&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">			System.out.println(Thread.currentThread().getName()+<span class="string">" request end."</span>);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></3></p>
+<p><4>ServerThread类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ServerThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> RequestQueue requestQueue;</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ServerThread</span><span class="params">(RequestQueue requestQueue, String name)</span> </span>&#123;</div><div class="line">		<span class="keyword">super</span>(name);</div><div class="line">		<span class="keyword">this</span>.requestQueue = requestQueue;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</div><div class="line">			RequestPoJo request = requestQueue.getRequest();</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				Thread.sleep(<span class="number">2000</span>);</div><div class="line">			&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">				<span class="comment">// TODO Auto-generated catch block</span></div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">			System.out.println(Thread.currentThread().getName()+<span class="string">" handles,"</span>+request);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></4></p>
+<blockquote>
+<p>Guarded Suspension模式可以在一定程度上环节系统的压力，它可以将系统的负载在时间轴上均匀的分配，有效的降低系统的瞬时负载，对提高系统的抗压力和稳定性有一定的帮助。</p>
+</blockquote>
 
       
     </div>
@@ -422,9 +433,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Java/" rel="tag"># Java</a>
+            <a href="/tags/设计模式/" rel="tag"># 设计模式</a>
           
-            <a href="/tags/分布式/" rel="tag"># 分布式</a>
+            <a href="/tags/Java/" rel="tag"># Java</a>
           
         </div>
       
@@ -433,8 +444,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/05/03/hello-world/" rel="next" title="Hello World">
-                <i class="fa fa-chevron-left"></i> Hello World
+              <a href="/2017/09/22/死磕并发-并发程序设计模式（二）/" rel="next" title="死磕并发--并发程序设计模式（二）">
+                <i class="fa fa-chevron-left"></i> 死磕并发--并发程序设计模式（二）
               </a>
             
           </div>
@@ -442,10 +453,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/09/04/设计模式之单例模式/" rel="prev" title="设计模式之单例模式">
-                设计模式之单例模式 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -586,7 +593,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#基本概念"><span class="nav-number">1.</span> <span class="nav-text">基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#举个例子"><span class="nav-number">2.</span> <span class="nav-text">举个例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#针对分布式锁的实现，目前比较常用的有以下几种方案："><span class="nav-number">3.</span> <span class="nav-text">针对分布式锁的实现，目前比较常用的有以下几种方案：</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Guarded-Suspension模式"><span class="nav-number">1.</span> <span class="nav-text">Guarded Suspension模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Guarded-Suspension的理解和实现"><span class="nav-number">2.</span> <span class="nav-text">Guarded Suspension的理解和实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Guarded-Suspension模式的结构"><span class="nav-number">2.1.</span> <span class="nav-text">Guarded Suspension模式的结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Guarded-Suspension模式的实现"><span class="nav-number">2.2.</span> <span class="nav-text">Guarded Suspension模式的实现</span></a></li></ol></li></ol></div>
             
 
           </div>
