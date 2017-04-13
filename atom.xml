@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-04-13T12:18:59.396Z</updated>
+  <updated>2017-04-13T12:30:22.639Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -17,10 +17,10 @@
   
   <entry>
     <title>死磕并发--并发程序设计模式（三）</title>
-    <link href="https://stefanma.github.io/2017/09/23/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%B8%89%EF%BC%89/"/>
-    <id>https://stefanma.github.io/2017/09/23/死磕并发-并发程序设计模式（三）/</id>
-    <published>2017-09-23T09:53:10.000Z</published>
-    <updated>2017-04-13T12:18:59.396Z</updated>
+    <link href="https://stefanma.github.io/2016/09/23/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%B8%89%EF%BC%89/"/>
+    <id>https://stefanma.github.io/2016/09/23/死磕并发-并发程序设计模式（三）/</id>
+    <published>2016-09-23T09:53:10.000Z</published>
+    <updated>2017-04-13T12:30:22.639Z</updated>
     
     <content type="html"><![CDATA[<h2 id="Guarded-Suspension模式"><a href="#Guarded-Suspension模式" class="headerlink" title="Guarded Suspension模式"></a>Guarded Suspension模式</h2><p>设想一个场景，服务器可能在短时间内承受大量的客户端的请求，客户端的请求数量已经超过了服务器本身的即时处理能力，而服务端又不能丢失任何一个客户请求。此时最佳的方案莫过于就是让客户端的请求进行排队，有服务端一个接一个的处理，这样即可以保证客户端所有的请求均不丢失，同时也避免服务器由于同时处理太多的请求而崩溃。<br>Guarded Suspension解释为保护暂停，核心的思想是仅当服务端进程准备好时，才会提供服务。</p>
 <h2 id="Guarded-Suspension的理解和实现"><a href="#Guarded-Suspension的理解和实现" class="headerlink" title="Guarded Suspension的理解和实现"></a>Guarded Suspension的理解和实现</h2><h3 id="Guarded-Suspension模式的结构"><a href="#Guarded-Suspension模式的结构" class="headerlink" title="Guarded Suspension模式的结构"></a>Guarded Suspension模式的结构</h3><p>Request对象封装了客户端的请求。RequestQueue表示客户端的请求队列，由ClientThread和ServerThread共同维护。其中，ClientThread负责不断的发送请求，并将请求对象放入请求队列中。ServerThread根据自身状态，在有能力的处理请求时，从RequestQueue中提取请求对象加以处理。<br>工作流程图如下：<br><img src="/img/guarded-suspension_0.png" alt="示意图"></p>
@@ -53,10 +53,10 @@
   
   <entry>
     <title>死磕并发--并发程序设计模式（二）</title>
-    <link href="https://stefanma.github.io/2017/09/22/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%BA%8C%EF%BC%89/"/>
-    <id>https://stefanma.github.io/2017/09/22/死磕并发-并发程序设计模式（二）/</id>
-    <published>2017-09-22T07:31:04.000Z</published>
-    <updated>2017-04-13T10:03:07.827Z</updated>
+    <link href="https://stefanma.github.io/2016/09/22/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%BA%8C%EF%BC%89/"/>
+    <id>https://stefanma.github.io/2016/09/22/死磕并发-并发程序设计模式（二）/</id>
+    <published>2016-09-22T07:31:04.000Z</published>
+    <updated>2017-04-13T12:30:11.796Z</updated>
     
     <content type="html"><![CDATA[<h2 id="Master-Worker模式"><a href="#Master-Worker模式" class="headerlink" title="Master-Worker模式"></a>Master-Worker模式</h2><p>Master-Worker模式是常用的并发模式之一。中心就是，系统中有两类进程协调工作，Master进程和Worker进程，Master负责接收和分配任务，Worker负责处理子任务，当各个子任务处理完毕后，将结果返回给Master进程，Master进行归纳和汇总，得到系统的最终结果。<br>处理过程如下：<br><img src="/img/master-worker_0.png" alt="示意图"></p>
 <p>Master-Worker模式的好处能够将一个大任务分解成若干的小任务执行，并行执行，提高系统的吞吐量。任务一旦提交，Master进程就会分配任务并立即返回，并不会等待系统全部处理完成后再返回，其处理过程是异步的。因此，Client不会出现等待的现象。</p>
@@ -110,6 +110,31 @@
     <summary type="html">
     
       并发程序的Future模式
+    
+    </summary>
+    
+      <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
+    
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>死磕并发--并发程序设计模式（四）</title>
+    <link href="https://stefanma.github.io/2016/09/13/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E5%9B%9B%EF%BC%89/"/>
+    <id>https://stefanma.github.io/2016/09/13/死磕并发-并发程序设计模式（四）/</id>
+    <published>2016-09-13T12:28:47.000Z</published>
+    <updated>2017-04-13T12:35:37.047Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="不变模式"><a href="#不变模式" class="headerlink" title="不变模式"></a>不变模式</h2><p>当多线程对同一个对象进行读写操作时，为了保证对象数据的一致性和正确性，有必要对对象进行同步。而同步操作对系统性能有相当的损耗。为了尽可能的去除这些同步操作，并提高并行程序性能，可以使用一种不可改变的对象，依靠对象的不变形，可以确保其在同步操作的多线程环境中依然保持内部状态的一致性和正确性。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      并发程序的不变模式
     
     </summary>
     
