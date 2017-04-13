@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-04-13T12:30:22.639Z</updated>
+  <updated>2017-04-13T12:38:51.938Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -14,6 +14,31 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>死磕并发--并发程序设计模式（四）</title>
+    <link href="https://stefanma.github.io/2016/09/23/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E5%9B%9B%EF%BC%89/"/>
+    <id>https://stefanma.github.io/2016/09/23/死磕并发-并发程序设计模式（四）/</id>
+    <published>2016-09-23T12:28:47.000Z</published>
+    <updated>2017-04-13T12:38:51.938Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="不变模式"><a href="#不变模式" class="headerlink" title="不变模式"></a>不变模式</h2><p>当多线程对同一个对象进行读写操作时，为了保证对象数据的一致性和正确性，有必要对对象进行同步。而同步操作对系统性能有相当的损耗。为了尽可能的去除这些同步操作，并提高并行程序性能，可以使用一种不可改变的对象，依靠对象的不变形，可以确保其在同步操作的多线程环境中依然保持内部状态的一致性和正确性。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      并发程序的不变模式
+    
+    </summary>
+    
+      <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
+    
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
+    
+  </entry>
   
   <entry>
     <title>死磕并发--并发程序设计模式（三）</title>
@@ -45,9 +70,9 @@
       <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
     
     
-      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
-    
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
     
   </entry>
   
@@ -79,9 +104,9 @@
       <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
     
     
-      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
-    
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
     
   </entry>
   
@@ -116,34 +141,9 @@
       <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
     
     
-      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
-    
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
-  </entry>
-  
-  <entry>
-    <title>死磕并发--并发程序设计模式（四）</title>
-    <link href="https://stefanma.github.io/2016/09/13/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E5%9B%9B%EF%BC%89/"/>
-    <id>https://stefanma.github.io/2016/09/13/死磕并发-并发程序设计模式（四）/</id>
-    <published>2016-09-13T12:28:47.000Z</published>
-    <updated>2017-04-13T12:35:37.047Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="不变模式"><a href="#不变模式" class="headerlink" title="不变模式"></a>不变模式</h2><p>当多线程对同一个对象进行读写操作时，为了保证对象数据的一致性和正确性，有必要对对象进行同步。而同步操作对系统性能有相当的损耗。为了尽可能的去除这些同步操作，并提高并行程序性能，可以使用一种不可改变的对象，依靠对象的不变形，可以确保其在同步操作的多线程环境中依然保持内部状态的一致性和正确性。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      并发程序的不变模式
-    
-    </summary>
-    
-      <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
-    
-    
       <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
-    
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
   </entry>
   
@@ -272,9 +272,9 @@
       <category term="设计模式" scheme="https://stefanma.github.io/categories/designpattern/"/>
     
     
-      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
-    
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
     
       <category term="设计优化" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96/"/>
     
@@ -301,9 +301,9 @@
       <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
     
     
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
   </entry>
   
