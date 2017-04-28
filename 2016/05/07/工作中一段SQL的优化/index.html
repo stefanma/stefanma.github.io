@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="MySQL,Java," />
+  <meta name="keywords" content="MySQL,SQL," />
 
 
 
@@ -86,16 +86,16 @@
 
 
 
-<meta name="description" content="MySQL中文排序方法">
+<meta name="description" content="一段SQL的优化">
 <meta property="og:type" content="article">
-<meta property="og:title" content="让MySQL支持中文排序的实现方法">
-<meta property="og:url" content="https://stefanma.github.io/2016/09/07/让MySQL支持中文排序的实现方法/index.html">
+<meta property="og:title" content="工作中一段SQL的优化">
+<meta property="og:url" content="https://stefanma.github.io/2016/05/07/工作中一段SQL的优化/index.html">
 <meta property="og:site_name" content="Stefan's Room">
-<meta property="og:description" content="MySQL中文排序方法">
-<meta property="og:updated_time" content="2017-03-10T11:16:25.597Z">
+<meta property="og:description" content="一段SQL的优化">
+<meta property="og:updated_time" content="2017-04-28T07:19:19.024Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="让MySQL支持中文排序的实现方法">
-<meta name="twitter:description" content="MySQL中文排序方法">
+<meta name="twitter:title" content="工作中一段SQL的优化">
+<meta name="twitter:description" content="一段SQL的优化">
 
 
 
@@ -123,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="https://stefanma.github.io/2016/09/07/让MySQL支持中文排序的实现方法/"/>
+  <link rel="canonical" href="https://stefanma.github.io/2016/05/07/工作中一段SQL的优化/"/>
 
 
 
 
 
-  <title> 让MySQL支持中文排序的实现方法 | Stefan's Room </title>
+  <title> 工作中一段SQL的优化 | Stefan's Room </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -295,7 +295,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/09/07/让MySQL支持中文排序的实现方法/">
+  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/05/07/工作中一段SQL的优化/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Stefan Ma">
@@ -319,7 +319,7 @@
             
             
               
-                让MySQL支持中文排序的实现方法
+                工作中一段SQL的优化
               
             
           </h1>
@@ -334,8 +334,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-07T10:57:36+08:00">
-                2016-09-07
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-05-07T18:06:51+08:00">
+                2016-05-07
               </time>
             
 
@@ -381,7 +381,7 @@
 
           
               <div class="post-description">
-                  MySQL中文排序方法
+                  一段SQL的优化
               </div>
           
 
@@ -396,13 +396,15 @@
       
 
       
-        <h2 id="让MySQL支持中文排序"><a href="#让MySQL支持中文排序" class="headerlink" title="让MySQL支持中文排序"></a>让MySQL支持中文排序</h2><p>如果在mysql中使用字符集为utf8，想要对中文字段用order by chinese_field 排序，那么出来的顺序并不是按照拼音排序的，不是我们想要的结果。</p>
-<h2 id="实现方法"><a href="#实现方法" class="headerlink" title="实现方法"></a>实现方法</h2><h3 id="（1）方案一"><a href="#（1）方案一" class="headerlink" title="（1）方案一"></a>（1）方案一</h3><p>对于包含中文的字段加上”binary”属性，使之作为二进制比较，例如将”name char(10)”改成”name char(10)binary”。<br>如果使用源码编译MySQL，可以编译MySQL时使用 –with–charset=gbk 参数，这样MySQL就会直接支持中文查找和排序。也可以用 extra-charsets=gb2312,gbk 来加入多个字符集。</p>
-<h3 id="（2）方案二"><a href="#（2）方案二" class="headerlink" title="（2）方案二"></a>（2）方案二</h3><p>可以在查询语句的order by部分使用 CONVERT 函数<br>对中文字段使用gbk编码排序：</p>
-<blockquote>
-<p>SELECT * FROM table ORDER BY CONVERT(chinese_field USING gbk );</p>
-</blockquote>
-<p>当然这需要你安装mysql时安装了gbk字符集，不然会报错：#1115 - Unknown character set: ‘gbk’</p>
+        <h2 id="优化一段逻辑SQL"><a href="#优化一段逻辑SQL" class="headerlink" title="优化一段逻辑SQL"></a>优化一段逻辑SQL</h2><p>在工作中，在看到一段SQL语句很长，执行的效率比较慢，每个表都有好几百万数据，单查一个表差不多3秒左右，两个表union跑了将近20秒，需要进行优化。</p>
+<p>原先的SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> a.bondUniCode,a.bondShortName,<span class="keyword">SUM</span>(a.ofrPrice)<span class="keyword">AS</span> ofrPrice,<span class="keyword">SUM</span>(a.ofrVol)<span class="keyword">AS</span> ofrVol,<span class="keyword">SUM</span>(a.bidPrice)<span class="keyword">AS</span> bidPrice,<span class="keyword">SUM</span>(a.bidVol)<span class="keyword">AS</span> bidVol,a.sendTime </div><div class="line"><span class="keyword">FROM</span> ( </div><div class="line">	<span class="keyword">SELECT</span></div><div class="line">		t.bond_uni_code <span class="keyword">AS</span> bondUniCode, </div><div class="line">		t.bond_short_name <span class="keyword">AS</span> bondShortName, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="number">0</span> <span class="keyword">ELSE</span> <span class="keyword">MAX</span>(t.bond_price) <span class="keyword">END</span> <span class="keyword">AS</span> bidPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line">	<span class="keyword">FROM</span> dmdb.t_bond_quote t </div><div class="line">	<span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>)= <span class="string">'2017-04-10'</span></div><div class="line">	<span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code  </div><div class="line">	<span class="keyword">UNION</span> </div><div class="line">	<span class="keyword">SELECT</span> </div><div class="line">		t.bond_uni_code <span class="keyword">AS</span> bondUniCode, </div><div class="line">		t.bond_short_name <span class="keyword">AS</span> bondShortName, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="number">0</span> <span class="keyword">ELSE</span> <span class="keyword">MIN</span>(t.bond_price) <span class="keyword">END</span> <span class="keyword">AS</span> ofrPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line">	<span class="keyword">FROM</span> dmdb.t_bond_quote t </div><div class="line">	<span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>)= <span class="string">'2017-04-10'</span></div><div class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code ) a <span class="keyword">GROUP</span> <span class="keyword">BY</span> a.bondUniCode;</div></pre></td></tr></table></figure></p>
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>(1)观察这段SQL的逻辑主要是按照条件（查询条件相同，除了side不同外）查询最大和最小的price的值；<br>(2)查询条件中使用了DATE_FORMAT函数；<br>(3)使用了UNION做联合；</p>
+<p>观察分析之后：</p>
+<p><1>2段SQL是否可以写成一个SQL呢？毕竟是差不多的查询条件，或者可以在查询的结果中做min和max的筛选呢；</1></p>
+<p><2>使用explain查看sql,在WHERE中使用DATE_FORMAT的send_time并没有使用到索引，使用该函数会使查询索引失效；</2></p>
+<p><3>如果可以将逻辑合并一个SQL中，UNION就可以不用；</3></p>
+<h2 id="优化后的SQL"><a href="#优化后的SQL" class="headerlink" title="优化后的SQL"></a>优化后的SQL</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> t.bond_uni_code <span class="keyword">AS</span> bondUniCode,t.bond_short_name <span class="keyword">AS</span> bondShortName,</div><div class="line"><span class="keyword">MIN</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">THEN</span> t.bond_price <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span>  <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">THEN</span> <span class="number">0</span>  <span class="keyword">END</span>) <span class="keyword">AS</span> ofrPrice,</div><div class="line"><span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line"><span class="keyword">MAX</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">THEN</span> t.bond_price <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span>  <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">THEN</span>  <span class="number">0</span>  <span class="keyword">END</span>) <span class="keyword">AS</span> bidPrice,</div><div class="line"><span class="number">0</span> <span class="keyword">AS</span> bidVol,</div><div class="line"><span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line"><span class="keyword">FROM</span> dmdb.t_bond_quote t  </div><div class="line"><span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> t.send_time  <span class="keyword">BETWEEN</span> <span class="string">'2017-04-10 000000'</span> <span class="keyword">AND</span> <span class="string">'2017-04-10 235959'</span></div><div class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code;</div></pre></td></tr></table></figure>
+<p>优化后的SQL语句在相同的环境下执行效率提高了N倍，而且可以查询到与优化前的SQL的同样的结果。</p>
 
       
     </div>
@@ -428,7 +430,7 @@
           
             <a href="/tags/MySQL/" rel="tag"># MySQL</a>
           
-            <a href="/tags/Java/" rel="tag"># Java</a>
+            <a href="/tags/SQL/" rel="tag"># SQL</a>
           
         </div>
       
@@ -437,8 +439,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/09/04/设计模式之单例模式/" rel="next" title="设计模式之单例模式">
-                <i class="fa fa-chevron-left"></i> 设计模式之单例模式
+              <a href="/2016/05/03/hello-world/" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
               </a>
             
           </div>
@@ -447,8 +449,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/09/09/Linux查找命令小记/" rel="prev" title="Linux查找命令小记">
-                Linux查找命令小记 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/09/03/分布式锁的基本原理/" rel="prev" title="分布式锁的基本原理">
+                分布式锁的基本原理 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -590,7 +592,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#让MySQL支持中文排序"><span class="nav-number">1.</span> <span class="nav-text">让MySQL支持中文排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现方法"><span class="nav-number">2.</span> <span class="nav-text">实现方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#（1）方案一"><span class="nav-number">2.1.</span> <span class="nav-text">（1）方案一</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#（2）方案二"><span class="nav-number">2.2.</span> <span class="nav-text">（2）方案二</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#优化一段逻辑SQL"><span class="nav-number">1.</span> <span class="nav-text">优化一段逻辑SQL</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#分析"><span class="nav-number">1.1.</span> <span class="nav-text">分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化后的SQL"><span class="nav-number">2.</span> <span class="nav-text">优化后的SQL</span></a></li></ol></div>
             
 
           </div>

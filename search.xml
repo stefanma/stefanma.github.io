@@ -282,6 +282,37 @@
     </entry>
     
     <entry>
+      <title><![CDATA[排查Java应用CPU使用率过高]]></title>
+      <url>https://stefanma.github.io/2016/09/13/%E6%8E%92%E6%9F%A5Java%E5%BA%94%E7%94%A8CPU%E4%BD%BF%E7%94%A8%E7%8E%87%E8%BF%87%E9%AB%98/</url>
+      <content type="html"><![CDATA[<h2 id="CPU使用率过高"><a href="#CPU使用率过高" class="headerlink" title="CPU使用率过高"></a>CPU使用率过高</h2><p>作为工程师我们会碰到Java应用某台机器cpu比较高的情况，在允许的情况下重启后基本上都会恢复正常，但是治标不治本，过上一段时间后还会出现CPU过高的问题。<br>一般的正常情况下：<br>应用使用CPU在 ：30%–40%<br>异常情况下：<br>CPU利用率在：80%—100%<br>一般Java应用CPU过高基本上有以下原因：<br>1.程序计算比较密集（计算密集型应用）；<br>2.程序死循环；<br>3.程序逻请求堵塞；<br>有的极端情况CPU甚至会飙到200%以上。</p>
+<p>不过有时候还是具体问题具体分析，懂得如何查找和分析问题的原因和步骤对于问题的解决有这重要意义。</p>
+<h2 id="定位和解决"><a href="#定位和解决" class="headerlink" title="定位和解决"></a>定位和解决</h2><p>碰到这样的问题该怎么定位和解决这类问题？</p>
+<h3 id="基本的步骤"><a href="#基本的步骤" class="headerlink" title="基本的步骤"></a>基本的步骤</h3><p>（1）通过top命令找到可疑进程PID，找出消耗资源最高的线程 ；<br><img src="/img/java_jvm_0.png" alt="示意图"><br>（2）通过ps aux | grep PID命令，可以进一步确定是tomcat进程出现了问题；<br><img src="/img/java_jvm_1.png" alt="示意图"><br>（3）通过ps -mp pid -o THREAD,tid,time 显示线程列表；<br><img src="/img/java_jvm_2.png" alt="示意图"><br>（4）通过printf “%x\n” tid 将需要的线程ID转换为16进制格式；<br>（5）通过jstack 命令打印线程的堆栈信息；</p>
+<blockquote>
+<p>jstack pid |grep tid -A 30 或者 jstack pid |grep tid -A 60</p>
+</blockquote>
+<p>jstack主要用来查看某个Java进程内的线程堆栈信息，jstack可以定位到线程堆栈，根据堆栈信息我们可以定位到具体代码，它在JVM性能调优中使用得非常多。</p>
+<p>语法格式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">jstack [option] pid</div><div class="line">jstack [option] executable core</div><div class="line">jstack [option] [server-id@]remote-hostname-or-ip</div></pre></td></tr></table></figure></p>
+]]></content>
+      
+        <categories>
+            
+            <category> Linux </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> Linux </tag>
+            
+            <tag> Java </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[Linux查找命令小记]]></title>
       <url>https://stefanma.github.io/2016/09/09/Linux%E6%9F%A5%E6%89%BE%E5%91%BD%E4%BB%A4%E5%B0%8F%E8%AE%B0/</url>
       <content type="html"><![CDATA[<p><strong>小记</strong><br>在Linux系统中查找文件，定位相关的路径是攻城狮们经常遇到的，Linux就向是一个相当大的仓库，需要及时的准确的找到自己想要的路径和文件，那就需要比较好的搜索工具；搜索工具好不好关系到定位问题的精准和效率。今天在DEV环境需要查找自己很久之前部署的Redis，文件路径由于时间比较久远已经忘记了，怎么精确的快速找到自己部署的应用。经历了一段小的寻找路程，虽然耗时不是那么多的时间，记录下来以便自己和看这篇文章的同学参考。</p>
@@ -347,9 +378,9 @@
         
         <tags>
             
-            <tag> Java </tag>
-            
             <tag> MySQL </tag>
+            
+            <tag> Java </tag>
             
         </tags>
         
@@ -425,9 +456,40 @@
         
         <tags>
             
+            <tag> Java </tag>
+            
             <tag> 分布式 </tag>
             
-            <tag> Java </tag>
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[工作中一段SQL的优化]]></title>
+      <url>https://stefanma.github.io/2016/05/07/%E5%B7%A5%E4%BD%9C%E4%B8%AD%E4%B8%80%E6%AE%B5SQL%E7%9A%84%E4%BC%98%E5%8C%96/</url>
+      <content type="html"><![CDATA[<h2 id="优化一段逻辑SQL"><a href="#优化一段逻辑SQL" class="headerlink" title="优化一段逻辑SQL"></a>优化一段逻辑SQL</h2><p>在工作中，在看到一段SQL语句很长，执行的效率比较慢，每个表都有好几百万数据，单查一个表差不多3秒左右，两个表union跑了将近20秒，需要进行优化。</p>
+<p>原先的SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> a.bondUniCode,a.bondShortName,<span class="keyword">SUM</span>(a.ofrPrice)<span class="keyword">AS</span> ofrPrice,<span class="keyword">SUM</span>(a.ofrVol)<span class="keyword">AS</span> ofrVol,<span class="keyword">SUM</span>(a.bidPrice)<span class="keyword">AS</span> bidPrice,<span class="keyword">SUM</span>(a.bidVol)<span class="keyword">AS</span> bidVol,a.sendTime </div><div class="line"><span class="keyword">FROM</span> ( </div><div class="line">	<span class="keyword">SELECT</span></div><div class="line">		t.bond_uni_code <span class="keyword">AS</span> bondUniCode, </div><div class="line">		t.bond_short_name <span class="keyword">AS</span> bondShortName, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="number">0</span> <span class="keyword">ELSE</span> <span class="keyword">MAX</span>(t.bond_price) <span class="keyword">END</span> <span class="keyword">AS</span> bidPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line">	<span class="keyword">FROM</span> dmdb.t_bond_quote t </div><div class="line">	<span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>)= <span class="string">'2017-04-10'</span></div><div class="line">	<span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code  </div><div class="line">	<span class="keyword">UNION</span> </div><div class="line">	<span class="keyword">SELECT</span> </div><div class="line">		t.bond_uni_code <span class="keyword">AS</span> bondUniCode, </div><div class="line">		t.bond_short_name <span class="keyword">AS</span> bondShortName, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="number">0</span> <span class="keyword">ELSE</span> <span class="keyword">MIN</span>(t.bond_price) <span class="keyword">END</span> <span class="keyword">AS</span> ofrPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line">	<span class="keyword">FROM</span> dmdb.t_bond_quote t </div><div class="line">	<span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>)= <span class="string">'2017-04-10'</span></div><div class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code ) a <span class="keyword">GROUP</span> <span class="keyword">BY</span> a.bondUniCode;</div></pre></td></tr></table></figure></p>
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>(1)观察这段SQL的逻辑主要是按照条件（查询条件相同，除了side不同外）查询最大和最小的price的值；<br>(2)查询条件中使用了DATE_FORMAT函数；<br>(3)使用了UNION做联合；</p>
+<p>观察分析之后：</p>
+<p><1>2段SQL是否可以写成一个SQL呢？毕竟是差不多的查询条件，或者可以在查询的结果中做min和max的筛选呢；</1></p>
+<p><2>使用explain查看sql,在WHERE中使用DATE_FORMAT的send_time并没有使用到索引，使用该函数会使查询索引失效；</2></p>
+<p><3>如果可以将逻辑合并一个SQL中，UNION就可以不用；</3></p>
+<h2 id="优化后的SQL"><a href="#优化后的SQL" class="headerlink" title="优化后的SQL"></a>优化后的SQL</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> t.bond_uni_code <span class="keyword">AS</span> bondUniCode,t.bond_short_name <span class="keyword">AS</span> bondShortName,</div><div class="line"><span class="keyword">MIN</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">THEN</span> t.bond_price <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span>  <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">THEN</span> <span class="number">0</span>  <span class="keyword">END</span>) <span class="keyword">AS</span> ofrPrice,</div><div class="line"><span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line"><span class="keyword">MAX</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">THEN</span> t.bond_price <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span>  <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">THEN</span>  <span class="number">0</span>  <span class="keyword">END</span>) <span class="keyword">AS</span> bidPrice,</div><div class="line"><span class="number">0</span> <span class="keyword">AS</span> bidVol,</div><div class="line"><span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line"><span class="keyword">FROM</span> dmdb.t_bond_quote t  </div><div class="line"><span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> t.send_time  <span class="keyword">BETWEEN</span> <span class="string">'2017-04-10 000000'</span> <span class="keyword">AND</span> <span class="string">'2017-04-10 235959'</span></div><div class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code;</div></pre></td></tr></table></figure>
+<p>优化后的SQL语句在相同的环境下执行效率提高了N倍，而且可以查询到与优化前的SQL的同样的结果。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> MySQL </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> MySQL </tag>
+            
+            <tag> SQL </tag>
             
         </tags>
         
