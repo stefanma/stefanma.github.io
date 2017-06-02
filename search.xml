@@ -4,6 +4,45 @@
   
     
     <entry>
+      <title><![CDATA[分布式系统数据一致性的思考（一）]]></title>
+      <url>https://stefanma.github.io/2017/04/12/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7%E7%9A%84%E6%80%9D%E8%80%83/</url>
+      <content type="html"><![CDATA[<h2 id="CAP理论"><a href="#CAP理论" class="headerlink" title="CAP理论"></a>CAP理论</h2><p>说到分布式系统的设计，我们都或多或少的接触过CAP；CAP代表的是什么呢？</p>
+<blockquote>
+<p><strong>Consistency(一致性)，数据一致更新，所有数据变动都是同步的；所有的节点上的数据时刻保持同步；</strong><br>  <strong>Availability(可用性)，好的响应性能；每个请求都能接受到一个响应，无论响应成功或失败；</strong><br>  <strong>Partition tolerance(分区容错) ，可靠性；系统应该能持续提供服务，即使系统内部有消息丢失（分区）；</strong></p>
+</blockquote>
+<p>CAP理论在互联网界有着广泛的知名度，知识宽泛一点的工程师都会把其作为衡量系统设计的准则。我们非常清楚地理解了CAP：任何分布式系统在可用性、一致性、分区容错性方面，不能兼得，最多只能得其二，因此，任何分布式系统的设计只是在三者中的不同取舍而已。（CAP在国内比价响，在国外的响力完全不如所想，相反还伴随着诸多的争论。）可以肯定的是，CAP并不适合再作为一个适应任何场景的定理，它的正确性更加适合基于原子读写的NoSQL场景。</p>
+<h2 id="高可用框架中数据一致性"><a href="#高可用框架中数据一致性" class="headerlink" title="高可用框架中数据一致性"></a>高可用框架中数据一致性</h2><p>在某些电商的业务场景下，系统一般会有多个独立的服务组成的，比如在一个业务场景下，一个业务操作同时调用了A，B，C服务，需要满足要么同时成功，要么同时失败。A，B，C可能是不同的部门开发的，部署在不同机器上的远程服务。</p>
+<p>对于分布式系统来说，如果不想牺牲一致性，CAP的理论告诉我们要弃用可用性，对于有些场景下是不能接受的。<br>说到数据一致性，先介绍一下数据一致性的理论基础：</p>
+<h3 id="强一致性"><a href="#强一致性" class="headerlink" title="强一致性"></a>强一致性</h3><p>当更新操作完成之后，任何多个后续进程或者线程的访问都会返回最新的更新过的值。当然这种是对用户最友好的，就是用户上一次写什么，下一次就保证能读到什么。根据 CAP 理论，这种实现需要牺牲可用性。强一致性可以理解为在任意时刻，所有节点中的数据是一样的。</p>
+<h3 id="弱一致性"><a href="#弱一致性" class="headerlink" title="弱一致性"></a>弱一致性</h3><p>系统并不保证续进程或者线程的访问都会返回最新的更新过的值。系统在数据写入成功之后，不承诺立即可以读到最新写入的值，也不会具体的承诺多久之后可以读到。</p>
+<h3 id="最终一致性"><a href="#最终一致性" class="headerlink" title="最终一致性"></a>最终一致性</h3><p>弱一致性的特定形式。系统保证在没有后续更新的前提下，系统最终返回上一次更新操作的值。在没有故障发生的前提下，不一致窗口的时间主要受通信延迟，系统负载和复制副本的个数影响。</p>
+<blockquote>
+<p>在系统的实践中，为了保证系统的高可用性，互联网系统大多将强一致性需求转换成最终一致性的需求并通过系统执行幂等性的保证，保证数据的最终一致性。</p>
+</blockquote>
+<h2 id="BASE和方案"><a href="#BASE和方案" class="headerlink" title="BASE和方案"></a>BASE和方案</h2><h3 id="BASE"><a href="#BASE" class="headerlink" title="BASE"></a>BASE</h3><p>BASE是指基本可用（Basically Available）、软状态（Soft State）、最终一致性（Eventual Consistency）。BASE理论是对CAP理论的延伸，核心思想是即使无法做到强一致性（Strong Consistency，CAP的一致性就是强一致性），但应用可以采用适合的方式达到最终一致性（Eventual Consitency）。<br>ACID是传统数据库常用的设计理念，追求强一致性模型。BASE支持的是大型分布式系统，提出通过牺牲强一致性获得高可用性。ACID和BASE代表了两种截然相反的设计哲学；在分布式系统设计的场景中，系统组件对一致性要求是不同的，因此ACID和BASE又会结合使用。</p>
+<h3 id="方案一【消息日志-本地事务】"><a href="#方案一【消息日志-本地事务】" class="headerlink" title="方案一【消息日志+本地事务】"></a>方案一【消息日志+本地事务】</h3><p>为了保证系统数据的最终一致性，可以使用本地事务来操作。<br>首先需要分布式处理的任务通过消息日志的方式来异步执行。消息日志可以存储到本地文本、数据库或消息队列，再通过业务规则或人工发起重试。人工重试更多的是应用于支付场景，通过对账系统对事后问题的处理。<br>消息日志的方案核心是保证服务接口的幂等性。考虑到网络通讯失败、数据丢包等原因，如果接口不能保证幂等性，数据的唯一性将很难保证。<br>其中一个经典的解决方法，来达到多次重试的幂等性。最常见的场景，如果产生一笔交易，需要在交易表中增加记录，同时还要修改用户表的金额，将主要的修改操作和更新用户表的消息放在一个本地事务来完成；为了避免重复消费用户表的消息带来的问题，达到多次重试的幂等性，增加一个更新记录表来记录已经处理过的消息。<br>基于以上的方法，在第一阶段，通过本地的数据库的事务保障，增加事务表以及消息队列。<br>在第二阶段，分别读出消息队列，通过判断更新记录表来检测相关的记录是否被执行，未被执行的记录会修改用户表然后增加一条操作记录到更新记录表，事务执行成功之后再删除队列。</p>
+<h3 id="方案二【分布式事务】"><a href="#方案二【分布式事务】" class="headerlink" title="方案二【分布式事务】"></a>方案二【分布式事务】</h3><p>目前很多的电商系统随着业务规模的扩大，将原来的一个单体应用拆分成多个不同职责的子系统。最开始的单体应用所有的功能都在一起，存储也在一起，可以在一个事务中，有关系数据库来保证一致性。<br>但是拆分之后就不同了，不同的子系统都有自己的存储，通过接口、RPC等方式来调用不同的子系统的服务，而不是直接操作数据库。这就涉及到一个[分布式事务]的问题。<br>对于分布式事务的解决方案，一般有2种。<br>(1)优先使用异步消息<br>在使用异步消息的时候消费者端要实现幂等。<br>实现幂等的方式有2种，一种是业务逻辑保证幂等。比如接到支付成功的消息订单状态要变成支付完成，如果当前状态是支付完成，则再收到一个支付成功的消息说明消息重复了，直接作为消息成功处理。另一种方式是如果业务逻辑无法保证幂等，则要增加一个去重表或是类似的实现。对于消息生产者端在业务数据库的同实例中放一个消息库，发消息和业务操作在同一个本地事务中。发消息的时候并不立即发出，而是向消息库中插入一条消息记录，然后在事务提交的时候再异步将消息发出，发送成功则将消息库中消息删除，如果遇到消息队列服务异常或者网络异常，消息没有成功发出消息还留在库里，会有另一个服务不断的将这些消息扫出重新发送。</p>
+<p>(2)每个业务库使用一个事务记录库<br>有的业务不适合使用异步消息的方式，事务的各个参与方都需要同步的得到结果。采取在每个参与方的本地业务库中的同实例中放一个事务记录库。<br>比如A同步调用B，C。A本地事务成功的时候更新本地事务记录状态，B和C同样。如果有一次A调用B失败了，有可能是B真的失败了，也有可能是调用超时，实际上B成功了。则由一个中心服务对比三方的事务记录表，做一个最终的决定。假设在三方的事务表中，有的成功，有的失败。</p>
+<p><1>重试B，只到B成功，事务表里记录了各项调用参数等信息；</1></p>
+<p><2>执行A和B的补偿操作（一种可行补偿方式就是回滚）<br>那么会有人觉得在业务库中的同实例中存放消息库或是事务记录库，会对业务侵入，业务还需要关心这个，是否是一个合理的设计？<br>实际上可以依靠运维手段来简化开发的侵入，可以采用的方法是通过DBA在MySQL实例上预初始化这个库，通过框架层（消息的客户端或事务RPC框架）透明的在背后操作这个库，业务开发人员只需要关心自己的业务逻辑，不需要访问这个库。<br>总结起来，两种方式的原理是类似的，也就是将分布式事务转换成多个本地事务，然后依靠重试等方式达到最终一致性。</2></p>
+]]></content>
+      
+        <categories>
+            
+            <category> 分布式 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 分布式 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[PostgreSQL的简介]]></title>
       <url>https://stefanma.github.io/2017/03/04/PostgreSQL%E7%9A%84%E7%AE%80%E4%BB%8B/</url>
       <content type="html"><![CDATA[<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>PostgreSQL是以加州大学伯克利分校计算机系开发的POSTGRES，现在已经更名为PostgreSQL，版本4.2为基础的对象关系型数据库管理系统（ORDBMS）。POSTGRES开创的许多概念在很久以后才出现在商业数据库中。<br>PostgreSQL支持大部分SQL标准并且提供了许多其它现代特性：</p>
@@ -46,6 +85,74 @@
             <tag> Linux </tag>
             
             <tag> PostgreSQL </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[对于热点缓存的思考]]></title>
+      <url>https://stefanma.github.io/2017/02/04/%E5%AF%B9%E4%BA%8E%E7%83%AD%E7%82%B9%E7%BC%93%E5%AD%98%E7%9A%84%E6%80%9D%E8%80%83/</url>
+      <content type="html"><![CDATA[<h2 id="热点key问题"><a href="#热点key问题" class="headerlink" title="热点key问题"></a>热点key问题</h2><p>项目中通常使用 缓存+过期时间 的策略来帮助我们加速接口的访问速度，减少了后端负载，同时保证功能的更新，一般情况下这种模式已经基本满足要求了。<br>但是有两个问题如果同时出现，可能就会对系统造成致命的危害：<br>1.这个key是一个热点key（例如一个重要的新闻，一个热门的八卦新闻等等），所以这种key访问量可能非常大。<br>2.缓存的构建是需要一定时间的。（可能是一个复杂计算，例如复杂的sql、多次IO、多个依赖(各种接口)等等）。</p>
+<p>于是就会出现一个致命问题：在缓存失效的瞬间，有大量线程来构建缓存，造成后端负载加大，甚至可能会让系统崩溃。<br><img src="/img/mutex_key_0.jpg" alt="示意图"></p>
+<h2 id="四种解决方案"><a href="#四种解决方案" class="headerlink" title="四种解决方案"></a>四种解决方案</h2><p><strong>我们的目标是：尽量少的线程构建缓存(甚至是一个) &amp;&amp; 数据一致性 &amp;&amp; 较少的潜在危险。</strong></p>
+<h3 id="使用互斥锁的方案"><a href="#使用互斥锁的方案" class="headerlink" title="使用互斥锁的方案"></a>使用互斥锁的方案</h3><p><strong>这种解决方案思路比较简单，就是只让一个线程构建缓存，其他线程等待构建缓存的线程执行完，重新从缓存获取数据就可以。</strong><br><img src="/img/mutex_key_1.jpg" alt="示意图"><br>如果是单机，可以用synchronized或者lock来处理；<br>如果是分布式环境可以用分布式锁就可以；分布式锁，可以用memcache的add，或者redis的setnx[SET if Not eXists], zookeeper的添加节点操作。</p>
+<p>redis代码实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function">String <span class="title">get</span><span class="params">(String key)</span> </span>&#123;  </div><div class="line">   String value = redis.get(key);  </div><div class="line">   <span class="keyword">if</span> (value  == <span class="keyword">null</span>) &#123;  </div><div class="line">    <span class="keyword">if</span> (redis.setnx(key_mutex, <span class="string">"1"</span>)) &#123;  </div><div class="line">        <span class="comment">// 3 min timeout to avoid mutex holder crash  </span></div><div class="line">        redis.expire(key_mutex, <span class="number">3</span> * <span class="number">60</span>)  </div><div class="line">        value = db.get(key);  </div><div class="line">        redis.set(key, value);  </div><div class="line">        redis.delete(key_mutex);  </div><div class="line">    &#125; <span class="keyword">else</span> &#123;  </div><div class="line">        <span class="comment">//其他线程休息50毫秒后重试  </span></div><div class="line">        Thread.sleep(<span class="number">50</span>);  </div><div class="line">        get(key);  </div><div class="line">    &#125;  </div><div class="line">  &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="“提前”使用互斥锁"><a href="#“提前”使用互斥锁" class="headerlink" title="“提前”使用互斥锁"></a>“提前”使用互斥锁</h3><p>在value内部设置1个超时值(timeout1)，timeout1比实际的timeout(timeout2)小。当从cache读取到timeout1发现它已经过期时候，马上延长timeout1并重新设置到cache。然后再从数据库加载数据并设置到cache中。</p>
+<p>memcache的代码实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">v = memcache.get(key);  </div><div class="line"><span class="keyword">if</span> (v == <span class="keyword">null</span>) &#123;  </div><div class="line">    <span class="keyword">if</span> (memcache.add(key_mutex, <span class="number">3</span> * <span class="number">60</span> * <span class="number">1000</span>) == <span class="keyword">true</span>) &#123;  </div><div class="line">        value = db.get(key);  </div><div class="line">        memcache.set(key, value);  </div><div class="line">        memcache.delete(key_mutex);  </div><div class="line">    &#125; <span class="keyword">else</span> &#123;  </div><div class="line">        sleep(<span class="number">50</span>);  </div><div class="line">        retry();  </div><div class="line">    &#125;  </div><div class="line">&#125; <span class="keyword">else</span> &#123;  </div><div class="line">    <span class="keyword">if</span> (v.timeout &lt;= now()) &#123;  </div><div class="line">        <span class="keyword">if</span> (memcache.add(key_mutex, <span class="number">3</span> * <span class="number">60</span> * <span class="number">1000</span>) == <span class="keyword">true</span>) &#123;  </div><div class="line">            <span class="comment">// extend the timeout for other threads  </span></div><div class="line">            v.timeout += <span class="number">3</span> * <span class="number">60</span> * <span class="number">1000</span>;  </div><div class="line">            memcache.set(key, v, KEY_TIMEOUT * <span class="number">2</span>);  </div><div class="line">  </div><div class="line">            <span class="comment">// load the latest value from db  </span></div><div class="line">            v = db.get(key);  </div><div class="line">            v.timeout = KEY_TIMEOUT;  </div><div class="line">            memcache.set(key, value, KEY_TIMEOUT * <span class="number">2</span>);  </div><div class="line">            memcache.delete(key_mutex);  </div><div class="line">        &#125; <span class="keyword">else</span> &#123;  </div><div class="line">            sleep(<span class="number">50</span>);  </div><div class="line">            retry();  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="“永远不过期”"><a href="#“永远不过期”" class="headerlink" title="“永远不过期”"></a>“永远不过期”</h3><p>其中”永远不过期”包含两层意思：<br>(1)从redis上看，确实没有设置过期时间，这就保证了，不会出现热点key过期问题，也就是“物理”不过期。<br>(2)把过期时间存在key对应的value里，如果发现要过期了，通过一个后台的异步线程进行缓存的构建，也就是“逻辑”过期。<br><img src="/img/mutex_key_2.png" alt="示意图"><br>从实战看，这种方法对于性能非常友好，唯一不足的就是构建缓存时候，其余线程(非构建缓存的线程)可能访问的是老数据，但是对于一般的互联网功能来说这个还是可以忍受。</p>
+<h3 id="资源保护"><a href="#资源保护" class="headerlink" title="资源保护"></a>资源保护</h3><p>可以使用提到了netflix的hystrix，可以做资源的隔离保护主线程池，如果把这个应用到缓存的构建也未尝不可。<br><img src="/img/mutex_key_3.png" alt="示意图"></p>
+<p>作为一个并发量较大的互联网应用，我们的目标有3个:</p>
+<ol>
+<li>加快用户访问速度，提高用户体验。</li>
+<li>降低后端负载，保证系统平稳。</li>
+<li>保证数据“尽可能”及时更新(要不要完全一致，取决于业务，而不是技术。)</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">解决方案</th>
+<th style="text-align:left">优点</th>
+<th style="text-align:left">缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">简单分布式锁</td>
+<td style="text-align:left">思路简单;保证一致性</td>
+<td style="text-align:left">代码复杂度增大;存在死锁的风险;存在线程池阻塞的风险</td>
+</tr>
+<tr>
+<td style="text-align:left">加另外一个过期时间</td>
+<td style="text-align:left">保证一致性</td>
+<td style="text-align:left">代码复杂度增大;存在死锁的风险;存在线程池阻塞的风险</td>
+</tr>
+<tr>
+<td style="text-align:left">不过期</td>
+<td style="text-align:left">异步构建缓存，不会阻塞线程池</td>
+<td style="text-align:left">不保证一致性;代码复杂度增大(每个value都要维护一个timekey);占用一定的内存空间(每个value都要维护一个timekey)</td>
+</tr>
+<tr>
+<td style="text-align:left">资源隔离组件hystrix</td>
+<td style="text-align:left">hystrix技术成熟，有效保证后端;hystrix监控强大</td>
+<td style="text-align:left">部分访问存在降级策略</td>
+</tr>
+</tbody>
+</table>
+]]></content>
+      
+        <categories>
+            
+            <category> Redis </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> Redis </tag>
+            
+            <tag> 分布式 </tag>
             
         </tags>
         
@@ -426,9 +533,9 @@
         
         <tags>
             
-            <tag> Java </tag>
-            
             <tag> MySQL </tag>
+            
+            <tag> Java </tag>
             
         </tags>
         

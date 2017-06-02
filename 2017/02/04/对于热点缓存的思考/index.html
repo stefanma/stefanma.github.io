@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Java,设计模式,设计优化," />
+  <meta name="keywords" content="Redis,分布式," />
 
 
 
@@ -86,16 +86,21 @@
 
 
 
-<meta name="description" content="单例模式的理解和应用">
+<meta name="description" content="有关于热点缓存的思考以及解决方案">
 <meta property="og:type" content="article">
-<meta property="og:title" content="设计模式之单例模式">
-<meta property="og:url" content="https://stefanma.github.io/2016/09/04/设计模式之单例模式/index.html">
+<meta property="og:title" content="对于热点缓存的思考">
+<meta property="og:url" content="https://stefanma.github.io/2017/02/04/对于热点缓存的思考/index.html">
 <meta property="og:site_name" content="Stefan's Room">
-<meta property="og:description" content="单例模式的理解和应用">
-<meta property="og:updated_time" content="2017-03-05T14:50:00.395Z">
+<meta property="og:description" content="有关于热点缓存的思考以及解决方案">
+<meta property="og:image" content="https://stefanma.github.io/img/mutex_key_0.jpg">
+<meta property="og:image" content="https://stefanma.github.io/img/mutex_key_1.jpg">
+<meta property="og:image" content="https://stefanma.github.io/img/mutex_key_2.png">
+<meta property="og:image" content="https://stefanma.github.io/img/mutex_key_3.png">
+<meta property="og:updated_time" content="2017-06-02T06:46:29.605Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="设计模式之单例模式">
-<meta name="twitter:description" content="单例模式的理解和应用">
+<meta name="twitter:title" content="对于热点缓存的思考">
+<meta name="twitter:description" content="有关于热点缓存的思考以及解决方案">
+<meta name="twitter:image" content="https://stefanma.github.io/img/mutex_key_0.jpg">
 
 
 
@@ -123,13 +128,13 @@
 
 
 
-  <link rel="canonical" href="https://stefanma.github.io/2016/09/04/设计模式之单例模式/"/>
+  <link rel="canonical" href="https://stefanma.github.io/2017/02/04/对于热点缓存的思考/"/>
 
 
 
 
 
-  <title> 设计模式之单例模式 | Stefan's Room </title>
+  <title> 对于热点缓存的思考 | Stefan's Room </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -295,7 +300,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/09/04/设计模式之单例模式/">
+  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2017/02/04/对于热点缓存的思考/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Stefan Ma">
@@ -319,7 +324,7 @@
             
             
               
-                设计模式之单例模式
+                对于热点缓存的思考
               
             
           </h1>
@@ -334,8 +339,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-04T10:33:08+08:00">
-                2016-09-04
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-04T20:09:02+08:00">
+                2017-02-04
               </time>
             
 
@@ -357,8 +362,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/designpattern/" itemprop="url" rel="index">
-                    <span itemprop="name">设计模式</span>
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
                   </a>
                 </span>
 
@@ -381,7 +386,7 @@
 
           
               <div class="post-description">
-                  单例模式的理解和应用
+                  有关于热点缓存的思考以及解决方案
               </div>
           
 
@@ -396,35 +401,52 @@
       
 
       
-        <h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><p>单例模式是项目中的设计模式最普遍使用的模式之一。它是一种对象创建的模式，用于产生一个对象的具体实例，可以确保系统中一个类只产生一个实例。<br>有2大好处：<br>（1）对于频繁使用的对象，可以省略创建对象所花费的时间，对于那些重量级的对象而言，是一笔非常客观的系统开销；<br>（2）由于new的操作次数减少，因而对系统内存的使用频率也会降低，这将会减轻GC的压力，缩短GC停顿的时间；<br>对于系统的关键组件和被频繁使用的对象，使用单例可以有效的改善系统性能。</p>
-<h3 id="单例类的角色："><a href="#单例类的角色：" class="headerlink" title="单例类的角色："></a>单例类的角色：</h3><table>
+        <h2 id="热点key问题"><a href="#热点key问题" class="headerlink" title="热点key问题"></a>热点key问题</h2><p>项目中通常使用 缓存+过期时间 的策略来帮助我们加速接口的访问速度，减少了后端负载，同时保证功能的更新，一般情况下这种模式已经基本满足要求了。<br>但是有两个问题如果同时出现，可能就会对系统造成致命的危害：<br>1.这个key是一个热点key（例如一个重要的新闻，一个热门的八卦新闻等等），所以这种key访问量可能非常大。<br>2.缓存的构建是需要一定时间的。（可能是一个复杂计算，例如复杂的sql、多次IO、多个依赖(各种接口)等等）。</p>
+<p>于是就会出现一个致命问题：在缓存失效的瞬间，有大量线程来构建缓存，造成后端负载加大，甚至可能会让系统崩溃。<br><img src="/img/mutex_key_0.jpg" alt="示意图"></p>
+<h2 id="四种解决方案"><a href="#四种解决方案" class="headerlink" title="四种解决方案"></a>四种解决方案</h2><p><strong>我们的目标是：尽量少的线程构建缓存(甚至是一个) &amp;&amp; 数据一致性 &amp;&amp; 较少的潜在危险。</strong></p>
+<h3 id="使用互斥锁的方案"><a href="#使用互斥锁的方案" class="headerlink" title="使用互斥锁的方案"></a>使用互斥锁的方案</h3><p><strong>这种解决方案思路比较简单，就是只让一个线程构建缓存，其他线程等待构建缓存的线程执行完，重新从缓存获取数据就可以。</strong><br><img src="/img/mutex_key_1.jpg" alt="示意图"><br>如果是单机，可以用synchronized或者lock来处理；<br>如果是分布式环境可以用分布式锁就可以；分布式锁，可以用memcache的add，或者redis的setnx[SET if Not eXists], zookeeper的添加节点操作。</p>
+<p>redis代码实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function">String <span class="title">get</span><span class="params">(String key)</span> </span>&#123;  </div><div class="line">   String value = redis.get(key);  </div><div class="line">   <span class="keyword">if</span> (value  == <span class="keyword">null</span>) &#123;  </div><div class="line">    <span class="keyword">if</span> (redis.setnx(key_mutex, <span class="string">"1"</span>)) &#123;  </div><div class="line">        <span class="comment">// 3 min timeout to avoid mutex holder crash  </span></div><div class="line">        redis.expire(key_mutex, <span class="number">3</span> * <span class="number">60</span>)  </div><div class="line">        value = db.get(key);  </div><div class="line">        redis.set(key, value);  </div><div class="line">        redis.delete(key_mutex);  </div><div class="line">    &#125; <span class="keyword">else</span> &#123;  </div><div class="line">        <span class="comment">//其他线程休息50毫秒后重试  </span></div><div class="line">        Thread.sleep(<span class="number">50</span>);  </div><div class="line">        get(key);  </div><div class="line">    &#125;  </div><div class="line">  &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="“提前”使用互斥锁"><a href="#“提前”使用互斥锁" class="headerlink" title="“提前”使用互斥锁"></a>“提前”使用互斥锁</h3><p>在value内部设置1个超时值(timeout1)，timeout1比实际的timeout(timeout2)小。当从cache读取到timeout1发现它已经过期时候，马上延长timeout1并重新设置到cache。然后再从数据库加载数据并设置到cache中。</p>
+<p>memcache的代码实现：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div></pre></td><td class="code"><pre><div class="line">v = memcache.get(key);  </div><div class="line"><span class="keyword">if</span> (v == <span class="keyword">null</span>) &#123;  </div><div class="line">    <span class="keyword">if</span> (memcache.add(key_mutex, <span class="number">3</span> * <span class="number">60</span> * <span class="number">1000</span>) == <span class="keyword">true</span>) &#123;  </div><div class="line">        value = db.get(key);  </div><div class="line">        memcache.set(key, value);  </div><div class="line">        memcache.delete(key_mutex);  </div><div class="line">    &#125; <span class="keyword">else</span> &#123;  </div><div class="line">        sleep(<span class="number">50</span>);  </div><div class="line">        retry();  </div><div class="line">    &#125;  </div><div class="line">&#125; <span class="keyword">else</span> &#123;  </div><div class="line">    <span class="keyword">if</span> (v.timeout &lt;= now()) &#123;  </div><div class="line">        <span class="keyword">if</span> (memcache.add(key_mutex, <span class="number">3</span> * <span class="number">60</span> * <span class="number">1000</span>) == <span class="keyword">true</span>) &#123;  </div><div class="line">            <span class="comment">// extend the timeout for other threads  </span></div><div class="line">            v.timeout += <span class="number">3</span> * <span class="number">60</span> * <span class="number">1000</span>;  </div><div class="line">            memcache.set(key, v, KEY_TIMEOUT * <span class="number">2</span>);  </div><div class="line">  </div><div class="line">            <span class="comment">// load the latest value from db  </span></div><div class="line">            v = db.get(key);  </div><div class="line">            v.timeout = KEY_TIMEOUT;  </div><div class="line">            memcache.set(key, value, KEY_TIMEOUT * <span class="number">2</span>);  </div><div class="line">            memcache.delete(key_mutex);  </div><div class="line">        &#125; <span class="keyword">else</span> &#123;  </div><div class="line">            sleep(<span class="number">50</span>);  </div><div class="line">            retry();  </div><div class="line">        &#125;  </div><div class="line">    &#125;  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="“永远不过期”"><a href="#“永远不过期”" class="headerlink" title="“永远不过期”"></a>“永远不过期”</h3><p>其中”永远不过期”包含两层意思：<br>(1)从redis上看，确实没有设置过期时间，这就保证了，不会出现热点key过期问题，也就是“物理”不过期。<br>(2)把过期时间存在key对应的value里，如果发现要过期了，通过一个后台的异步线程进行缓存的构建，也就是“逻辑”过期。<br><img src="/img/mutex_key_2.png" alt="示意图"><br>从实战看，这种方法对于性能非常友好，唯一不足的就是构建缓存时候，其余线程(非构建缓存的线程)可能访问的是老数据，但是对于一般的互联网功能来说这个还是可以忍受。</p>
+<h3 id="资源保护"><a href="#资源保护" class="headerlink" title="资源保护"></a>资源保护</h3><p>可以使用提到了netflix的hystrix，可以做资源的隔离保护主线程池，如果把这个应用到缓存的构建也未尝不可。<br><img src="/img/mutex_key_3.png" alt="示意图"></p>
+<p>作为一个并发量较大的互联网应用，我们的目标有3个:</p>
+<ol>
+<li>加快用户访问速度，提高用户体验。</li>
+<li>降低后端负载，保证系统平稳。</li>
+<li>保证数据“尽可能”及时更新(要不要完全一致，取决于业务，而不是技术。)</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><table>
 <thead>
 <tr>
-<th style="text-align:center">角色</th>
-<th style="text-align:center">作用</th>
+<th style="text-align:left">解决方案</th>
+<th style="text-align:left">优点</th>
+<th style="text-align:left">缺点</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:center">单例者</td>
-<td style="text-align:center">提供单例工厂，返回单例</td>
+<td style="text-align:left">简单分布式锁</td>
+<td style="text-align:left">思路简单;保证一致性</td>
+<td style="text-align:left">代码复杂度增大;存在死锁的风险;存在线程池阻塞的风险</td>
 </tr>
 <tr>
-<td style="text-align:center">使用者</td>
-<td style="text-align:center">获取并使用单例类</td>
+<td style="text-align:left">加另外一个过期时间</td>
+<td style="text-align:left">保证一致性</td>
+<td style="text-align:left">代码复杂度增大;存在死锁的风险;存在线程池阻塞的风险</td>
+</tr>
+<tr>
+<td style="text-align:left">不过期</td>
+<td style="text-align:left">异步构建缓存，不会阻塞线程池</td>
+<td style="text-align:left">不保证一致性;代码复杂度增大(每个value都要维护一个timekey);占用一定的内存空间(每个value都要维护一个timekey)</td>
+</tr>
+<tr>
+<td style="text-align:left">资源隔离组件hystrix</td>
+<td style="text-align:left">hystrix技术成熟，有效保证后端;hystrix监控强大</td>
+<td style="text-align:left">部分访问存在降级策略</td>
 </tr>
 </tbody>
 </table>
-<h3 id="单例的实现："><a href="#单例的实现：" class="headerlink" title="单例的实现："></a>单例的实现：</h3><p>单例模式的核心是通过一个接口返回唯一的一个对象实例。一个简单的实现如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Singleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">Singleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"Singleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Singleton instance = <span class="keyword">new</span> Singleton();</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Singleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>首先单例类必须有一个private访问级别的构造函数，只有这样，才能保证单例不会被系统中其他代码内被实例化，这一点是相当重要的；其次instance成员变量和getInstance()方法必须是static的。<br>它唯一不足的地方是无法对instance做延迟加载。假如单例的创建过程很慢，而由于instance成员变量是static定义的，因此在JVM加载单例类的时候，单例对象会被创建，如果此时，这个单例类在系统中扮演其他角色，那么在任何使用这个单例类的地方都会初始化这个单例变量，而不管是否被用到。</p>
-<p>为了解决这个问题，并以此来提高系统在相关函数调用时的反应速度，就需要加入延迟加载机制。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LazySingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">LazySingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"LazySingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> LazySingleton instance = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> LazySingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == instance)&#123;</div><div class="line">            instance = <span class="keyword">new</span> LazySingleton();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>使用上例中的单例实现，虽然实现了延迟加载的功能，但是和第一种方法相比，它引入了同步关键字，以此在多线程环境中，它的耗时会远远大于第一种的单例的实现。</p>
-<p>为了使用延迟加载而引入同步关键字反而降低了系统性能，是不是有点得不偿失？<br>为了解决这个问题，对其进行改造：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StaticSingleton</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">StaticSingleton</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(<span class="string">"StaticSingleton is created.."</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">SingletonHolder</span> </span>&#123;</div><div class="line">        <span class="keyword">private</span> <span class="keyword">static</span> StaticSingleton instance = <span class="keyword">new</span> StaticSingleton();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> StaticSingleton <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> SingletonHolder.instance;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>在这个实现中，单例模式使用内部类来维护单例的实例，当StaticSingleton被加载时，其内部类不会被初始化，故此可以确保StaticSingleton类被加载到JVM时，不会初始化单例类，而当getInstance()方法被调用时，才会加载SingletonHolder，从而初始化instance，同时，实例的创建是在类加载的时候完成的，故天生对多线程是友好的，getInstance()也不需要加同步关键字。这种方式兼顾以上两种实现的优点。</p>
-<p><strong>注意：</strong></p>
-<blockquote>
-<p>使用内部类的方式实现单例，既可以做到延迟加载，也不必使用同步关键字，是一种比较完善的实现。</p>
-</blockquote>
 
       
     </div>
@@ -448,11 +470,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Java/" rel="tag"># Java</a>
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
           
-            <a href="/tags/设计模式/" rel="tag"># 设计模式</a>
-          
-            <a href="/tags/设计优化/" rel="tag"># 设计优化</a>
+            <a href="/tags/分布式/" rel="tag"># 分布式</a>
           
         </div>
       
@@ -461,8 +481,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/09/03/分布式锁的基本原理/" rel="next" title="分布式锁的基本原理">
-                <i class="fa fa-chevron-left"></i> 分布式锁的基本原理
+              <a href="/2017/01/18/什么是区块链/" rel="next" title="什么是区块链">
+                <i class="fa fa-chevron-left"></i> 什么是区块链
               </a>
             
           </div>
@@ -471,8 +491,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/09/07/让MySQL支持中文排序的实现方法/" rel="prev" title="让MySQL支持中文排序的实现方法">
-                让MySQL支持中文排序的实现方法 <i class="fa fa-chevron-right"></i>
+              <a href="/2017/03/04/PostgreSQL的简介/" rel="prev" title="PostgreSQL的简介">
+                PostgreSQL的简介 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -614,7 +634,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#单例模式"><span class="nav-number">1.</span> <span class="nav-text">单例模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单例类的角色："><span class="nav-number">1.1.</span> <span class="nav-text">单例类的角色：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#单例的实现："><span class="nav-number">1.2.</span> <span class="nav-text">单例的实现：</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#热点key问题"><span class="nav-number">1.</span> <span class="nav-text">热点key问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四种解决方案"><span class="nav-number">2.</span> <span class="nav-text">四种解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用互斥锁的方案"><span class="nav-number">2.1.</span> <span class="nav-text">使用互斥锁的方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#“提前”使用互斥锁"><span class="nav-number">2.2.</span> <span class="nav-text">“提前”使用互斥锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#“永远不过期”"><span class="nav-number">2.3.</span> <span class="nav-text">“永远不过期”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#资源保护"><span class="nav-number">2.4.</span> <span class="nav-text">资源保护</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
 
           </div>
