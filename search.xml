@@ -43,6 +43,78 @@
     </entry>
     
     <entry>
+      <title><![CDATA[Zookeeper系列学习：数据模型和特点]]></title>
+      <url>https://stefanma.github.io/2017/03/06/Zookeeper%E7%B3%BB%E5%88%97%E5%AD%A6%E4%B9%A0%EF%BC%9A%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B%E5%92%8C%E7%89%B9%E7%82%B9/</url>
+      <content type="html"><![CDATA[<h2 id="ZooKeeper数据模型"><a href="#ZooKeeper数据模型" class="headerlink" title="ZooKeeper数据模型"></a>ZooKeeper数据模型</h2><p>紧接着上一篇的概述中所写的数据模型的概述，接下来对数据模型比较详细的阐述。</p>
+<p>ZooKeeper的数据模型，在结构上和标准文件系统的非常相似，都是采用树形层次结构，ZooKeeper树中的每个节点被称为—Znode。和文件系统的目录树一样，ZooKeeper目录树中每一个节点对应一个Znode，ZooKeeper树中的每个节点可以拥有子节点。每个Znode上可存储少量数据。用户对Znode具有增、删、改、查等操作（权限允许的情况下）。<br>Znode具有原子性操作，每个Znode的数据将被原子性地读写，读操作会读取与Znode相关的所有数据，写操作会一次性替换所有数据。<br>每个Znode维护着一个属性结构，它包含着版本号(dataVersion)，时间戳(ctime,mtime)等状态信息。ZooKeeper正是使用节点的这些特性来实现它的某些特定功能。每当Znode的数据改变时，他相应的版本号将会增加。每当客户端检索数据时，它将同时检索数据的版本号。并且如果一个客户端执行了某个节点的更新或删除操作，他也必须提供要被操作的数据版本号。如果所提供的数据版本号与实际不匹配，那么这个操作将会失败。</p>
+<p>Znode是客户端访问ZooKeeper的主要实体，它包含以下几个特征：<br>（1）Watches<br>客户端可以在节点上设置watch(我们称之为监视器)。当节点状态发生改变时(数据的增、删、改)将会触发watch所对应的操作。当watch被触发时，ZooKeeper将会向客户端发送且仅发送一条通知，因为watch只能被触发一次。<br>（2）数据访问<br>ZooKeeper中的每个节点存储的数据要被原子性的操作。也就是说读操作将获取与节点相关的所有数据，写操作也将替换掉节点的所有数据。另外，每一个节点都拥有自己的ACL(访问控制列表)，这个列表规定了用户的权限，即限定了特定用户对目标节点可以执行的操作。<br>（3）Znode节点类型<br>ZooKeeper中的节点有两种，分别为临时节点和永久节点。节点的类型在创建时即被确定，并且不能改变。<br>①临时节点：该节点的生命周期依赖于创建它们的会话。一旦会话(Session)结束，临时节点将被自动删除，当然可以也可以手动删除。虽然每个临时的Znode都会绑定到一个客户端会话，但他们对所有的客户端还是可见的。另外，ZooKeeper的临时节点不允许拥有子节点。<br>②永久节点：该节点的生命周期不依赖于会话，并且只有在客户端显示执行删除操作的时候，他们才能被删除。<br>ZooKeeper的永久节点：该节点的生命周期不依赖于会话，并且只有在客户端显示执行删除操作的时候，他们才能被删除。<br>（4）顺序节点（唯一性的保证）<br>当创建Znode的时候，用户可以请求在ZooKeeper的路径结尾添加一个递增的计数。这个计数对于此节点的父节点来说是唯一的，它的格式为”%10d”(10位数字，没有数值的数位用0补充，例如”0000000001”)。当计数值大于2^32-1时，计数器将溢出。<br>org.apache.zookeeper.CreateMode中定义了四种节点类型，分别对应：<br>PERSISTENT：永久节点<br>EPHEMERAL：临时节点<br>PERSISTENT_SEQUENTIAL：永久节点、序列化<br>EPHEMERAL_SEQUENTIAL：临时节点、序列化<br><img src="/img/zookeeper_1.png" alt="示意图"></p>
+<h2 id="ZooKeeper服务中的操作"><a href="#ZooKeeper服务中的操作" class="headerlink" title="ZooKeeper服务中的操作"></a>ZooKeeper服务中的操作</h2><p>在ZooKeeper中有9个基本操作:<br><img src="/img/zookeeper_2.png" alt="示意图"><br>更新ZooKeeper操作是有限制的。delete或setData必须明确要更新的Znode的版本号，我们可以调用exists找到。如果版本号不匹配，更新将会失败。<br>更新ZooKeeper操作是非阻塞式的。因此客户端如果失去了一个更新（由于另一个进程在同时更新这个Znode），他可以在不阻塞其他进程执行的情况下，选择重新尝试或进行其他操作。<br>尽管ZooKeeper可以被看做是一个文件系统，但是处于便利，摒弃了一些文件系统地操作原语。因为文件非常的小并且使整体读写的，所以不需要打开、关闭或是寻地的操作。</p>
+<p>Zonde总结<br>（1）Znode中的数据可以有多个版本，在查询该Znode数据时就需要带上版本信息。如：set path version / delete path version<br>（2）Znode可以是临时Znode，由create -e 生成的节点，一旦创建这个Znode的client与server断开连接，该Znode将被自动删除。<br>client和server之间通过heartbeat来确认连接正常，这种状态称之为session，断开连接后session失效。<br>（3）临时Znode不能有子Znode。<br>（4）Znode可以自动编号，由create -s 生成的节点，例如在 create -s /app/node 已存在时，将会生成 /app/node00<em>*</em>001节点。<br>（5）Znode可以被监控，该目录下某些信息的修改，例如节点数据、子节点变化等，可以主动通知监控注册的client。事实上，通过这个特性，可以完成许多重要应用，例如配置管理、信息同步、分布式锁等等。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 分布式 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> Java </tag>
+            
+            <tag> ZooKeeper </tag>
+            
+            <tag> 分布式 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[ZooKeeper系列学习：概述]]></title>
+      <url>https://stefanma.github.io/2017/03/05/Zookeeper%E7%B3%BB%E5%88%97%E5%AD%A6%E4%B9%A0%EF%BC%9A%E6%A6%82%E8%BF%B0/</url>
+      <content type="html"><![CDATA[<h2 id="ZooKeeper是什么，可以用作什么"><a href="#ZooKeeper是什么，可以用作什么" class="headerlink" title="ZooKeeper是什么，可以用作什么"></a>ZooKeeper是什么，可以用作什么</h2><p>官方一句话描述”ZooKeeper: A Distributed Coordination Service for Distributed Applications”。</p>
+<p>ZooKeeper作为Hadoop项目中的一个子项目,是Hadoop集群管理的一个必不可少的模块,它主要用来解决分布式应用中经常遇到的数据管理问题，如集群管理、统一命名服务、分布式配置管理、分布式消息队列、分布式锁、分布式协调等，是分布式中一致性处理的框架的重要组件。</p>
+<p>所谓的一致性，实际上就是围绕着“看见”来的。谁能看见？能否看见？什么时候看见？举个例子：淘宝后台卖家，在后台上架一件大促的商品，通过服务器A提交到主数据库，假设刚提交后立马就有用户去通过应用服务器B去从数据库查询该商品，就会出现一个现象，卖家已经更新成功了，然而买家却看不到；而经过一段时间后，主数据库的数据同步到了从数据库，买家就能查到了。<br>假设卖家更新成功之后买家立马就能看到卖家的更新，则称为<code>强一致性</code>；<br>如果卖家更新成功后买家不能看到卖家更新的内容，则称为<code>弱一致性</code>；<br>而卖家更新成功后，买家经过一段时间最终能看到卖家的更新，则称为<code>最终一致性</code>。</p>
+<h2 id="解决一致性问题的方式"><a href="#解决一致性问题的方式" class="headerlink" title="解决一致性问题的方式"></a>解决一致性问题的方式</h2><h3 id="常见解决问题的方式"><a href="#常见解决问题的方式" class="headerlink" title="常见解决问题的方式"></a>常见解决问题的方式</h3><p>如何保证在分布式环境下数据的最终一致，这个就是ZooKeeper需要解决的问题。<br>一些常见的解决一致性问题的方式：<br>（1）查询重试补偿<br>对于分布式应用中不确定的情况，先使用查询接口查询到当前状态，如果当前状态不一致则采用补偿接口对状态进行重试推进，或者回滚接口对业务做回滚。典型的场景如银行跟支付宝之间的交互。支付宝发送一个转账请求到银行，如一直未收到响应，则可以通过银行的查询接口查询该笔交易的状态，如该笔交易对方未收到，则采取补偿的模式进行推送。<br>（2）定时任务推送<br>有可能一次推送搞不定，于是需要2次，3次推送。当初支付宝内最初掉单率很高，全靠后续不断的定时任务推送增加成功率。<br>（3）TCC<br>try-confirm-cancel。实际上是两阶段协议，第二阶段的可以实现提交操作或是逆操作。</p>
+<h3 id="ZooKeeper能做什么"><a href="#ZooKeeper能做什么" class="headerlink" title="ZooKeeper能做什么"></a>ZooKeeper能做什么</h3><p>Dubbo作为业界知名的分布式SOA框架，Dubbo的主要的服务注册发现功能便是由ZooKeeper来提供的。<br>对于一个服务框架，注册中心是其核心中的核心，虽然暂时挂掉并不会导致整个服务出问题，但是一旦挂掉，整体风险就很高。考虑一般情况，注册中心就是单台机器的时候，其实现很容易，所有机器起来都去注册服务给它，并且所有调用方都跟它保持长连接，一旦服务有变，即通过长连接来通知到调用方。但是当服务集群规模扩大时，这事情就不简单了，单机保持连接数有限，而且容易故障。<br>作为一个稳定的服务化框架，dubbo可以选择并推荐ZooKeeper作为注册中心。其底层将ZooKeeper常用的客户端zkclient和curator封装成为ZooKeeperClient。<br>（1）当服务提供者服务启动时，向ZooKeeper注册一个节点；<br>（2）服务消费者则订阅其父节点的变化，诸如启动停止都能够通过节点创建删除得知，异常情况比如被调用方掉线也可以通过临时节点session 断开自动删除得知；<br>（3）服务消费方同时也会将自己订阅的服务以节点创建的方式放到ZooKeeper；<br>（4）于是可以得到映射关系，诸如谁提供了服务，谁订阅了谁提供的服务，基于这层关系再做监控，就能轻易得知整个系统情况。</p>
+<h2 id="ZooKeeper的数据模型"><a href="#ZooKeeper的数据模型" class="headerlink" title="ZooKeeper的数据模型"></a>ZooKeeper的数据模型</h2><p>ZooKeeper数据模型类似Linux操作系统的文件系统，也是以树的形式来存储。严格来说是一颗多叉树，每个节点上都可以存储数据，每个节点还可以拥有N个子结点，最上层是根节点以“/”来代表。<br><img src="/img/zookeeper_0.jpg" alt="示意图"><br>在每个结点上都存储了相应的数据，数据可以是字符串、二进制数。但是默认情况下每个结点的数据大小的上限是1M，这是因为ZooKeeper主要是用来协调服务的，而不是存储数据，管理一些配置文件和应用列表之类的数据。虽然可以修改配置文件来改变数据大小的上限，但是为了服务的高效和稳定，建议结点数据不要超过默认值。<br>在ZooKeeper中存储的创建的结点和存储的数据包含结点的创建时间、修改时间、结点id、结点中存储数据的版本、权限版本、孩子结点的个数、数据的长度等信息。<br>每个节点的Stat结构由下列字段组成：</p>
+<ul>
+<li>czxid：该数据节点被创建时的事务id。</li>
+<li>mzxid：该节点最后一次被更新时的事务id。</li>
+<li>ctime：节点被创建时的时间。</li>
+<li>mtime：节点最后一次被更新时的时间。</li>
+<li>version：这个节点的数据变化的次数。</li>
+<li>cversion：这个节点的子节点 变化次数。</li>
+<li>aversion：这个节点的ACL变化次数。</li>
+<li>ephemeralOwner：如果这个节点是临时节点，表示创建者的会话id。如果不是临时节点，这个值是0。</li>
+<li>dataLength：这个节点的数据长度。</li>
+<li>numChildren：这个节点的子节点个数。</li>
+</ul>
+<p>其节点有如下有趣而又重要的特性：<br>（1）同一时刻多台机器创建同一个节点，只有一个会争抢成功。利用这个特性可以做分布式锁。<br>（2）临时节点的生命周期与会话一致，会话关闭则临时节点删除。这个特性经常用来做心跳，动态监控，负载等动作。<br>（3）顺序节点保证节点名全局唯一。这个特性可以用来生成分布式环境下的全局自增长ID。</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 分布式 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> Java </tag>
+            
+            <tag> ZooKeeper </tag>
+            
+            <tag> 分布式 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
       <title><![CDATA[PostgreSQL的简介]]></title>
       <url>https://stefanma.github.io/2017/03/04/PostgreSQL%E7%9A%84%E7%AE%80%E4%BB%8B/</url>
       <content type="html"><![CDATA[<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>PostgreSQL是以加州大学伯克利分校计算机系开发的POSTGRES，现在已经更名为PostgreSQL，版本4.2为基础的对象关系型数据库管理系统（ORDBMS）。POSTGRES开创的许多概念在很久以后才出现在商业数据库中。<br>PostgreSQL支持大部分SQL标准并且提供了许多其它现代特性：</p>
@@ -150,9 +222,9 @@
         
         <tags>
             
-            <tag> Redis </tag>
-            
             <tag> 分布式 </tag>
+            
+            <tag> Redis </tag>
             
         </tags>
         
@@ -183,6 +255,31 @@
             <tag> 区块链 </tag>
             
             <tag> Blockchain </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Java8新特性简述]]></title>
+      <url>https://stefanma.github.io/2016/10/12/Java8%E6%96%B0%E7%89%B9%E6%80%A7%E7%AE%80%E8%BF%B0/</url>
+      <content type="html"><![CDATA[<p>Java8已经公布了比较长的一段时间，在项目中应用的比较多，接下来对Java8在项目中常应用到的一些特性做比较简要的概述。</p>
+<h2 id="Optional"><a href="#Optional" class="headerlink" title="Optional"></a>Optional</h2><p>到目前为止，空指针异常是导致Java应用程序失败的最常见原因。以前，为了解决空指针异常，Google公司著名的Guava项目引入了Optional类，Guava通过使用检查空值的方式来防止代码污染，它鼓励程序员写更干净的代码。受到Google Guava的启发，Optional类已经成为Java 8类库的一部分。Optional实际上是个容器：它可以保存类型T的值，或者仅仅保存null。<br>代码样例：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span> </span>&#123;</div><div class="line">    <span class="comment">//创建Optional实例，也可以通过方法返回值得到。</span></div><div class="line">    Optional&lt;String&gt; name = Optional.of(<span class="string">"Optional string value"</span>);</div><div class="line">    <span class="comment">//创建没有值的Optional实例，例如值为'null'</span></div><div class="line">    Optional empty = Optional.ofNullable(<span class="keyword">null</span>);</div><div class="line">    <span class="comment">//isPresent方法用来检查Optional实例是否有值。</span></div><div class="line">    <span class="keyword">if</span> (name.isPresent()) &#123;</div><div class="line">        <span class="comment">//调用get()返回Optional值。</span></div><div class="line">        System.out.println(name.get());</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        <span class="comment">//在Optional实例上调用get()抛出NoSuchElementException。</span></div><div class="line">        System.out.println(empty.get());</div><div class="line">    &#125; <span class="keyword">catch</span> (NoSuchElementException ex) &#123;</div><div class="line">        System.out.println(ex.getMessage());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">//如果Optional值不为空，lambda表达式会处理并在其上执行操作。</span></div><div class="line">    name.ifPresent((value) -&gt; &#123;</div><div class="line">        System.out.println(<span class="string">"The length of the value is: "</span> + value.length());</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    <span class="comment">//如果有值orElse方法会返回Optional实例，否则返回传入的错误信息。</span></div><div class="line">    System.out.println(empty.orElse(<span class="string">"empty.orElse, There is no value present!"</span>));</div><div class="line">    System.out.println(name.orElse(<span class="string">" name.orElse, There is some value!"</span>));</div><div class="line"></div><div class="line">    <span class="comment">//orElseGet与orElse类似，区别在于传入的默认值。</span></div><div class="line">    <span class="comment">//orElseGet接受lambda表达式生成默认值。</span></div><div class="line">    System.out.println(empty.orElseGet(() -&gt; <span class="string">"empty.orElseGet,Default Value"</span>));</div><div class="line">    System.out.println(name.orElseGet(() -&gt; <span class="string">"name.orElseGet,Default Value"</span>));</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">//filter方法检查给定的Option值是否满足某些条件。</span></div><div class="line">    <span class="comment">//如果满足则返回同一个Option实例，否则返回空Optional。</span></div><div class="line">    Optional&lt;String&gt; longName = name.filter((value) -&gt; value.length() &gt; <span class="number">26</span>);</div><div class="line">    System.out.println(longName.orElse(<span class="string">"The name is less than 26 characters"</span>));</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>1）of方法通过工厂方法创建Optional类。需要注意的是，创建对象时传入的参数不能为null。如果传入参数为null，则抛出NullPointerException 。<br>2）ofNullable与of方法相似，唯一的区别是可以接受参数为null的情况。<br>3）isPresent如果值存在返回true，否则返回false。<br>4）get方法用来得到Optional实例中的值。下面我们看一个抛出NoSuchElementException。<br>5）ifPresent方法，首先需要了解Consumer类。简答地说，Consumer类包含一个抽象方法。该抽象方法对传入的值进行处理，但没有返回值。<br>6）orElse如果有值则将其返回，否则返回指定的其它值。<br>7）orElseGet与orElse方法类似，区别在于得到的默认值。orElse方法将传入的字符串作为默认值，orElseGet方法可以接受Supplier接口的实现用来生成默认值。<br>8）map方法用来对Optional实例的值执行一系列操作。通过一组实现了Function接口的lambda表达式传入操作。<br>9）flatMap如果有值，为其执行mapping函数返回Optional类型返回值，否则返回空Optional。flatMap与map（Funtion）方法类似，区别在于flatMap中的mapper返回值必须是Optional。调用结束时，flatMap不会对结果用Optional封装。<br>10）filter如果有值并且满足断言条件返回包含该值的Optional，否则返回空Optional。</p>
+<p>官方文档：<br><a href="http://docs.oracle.com/javase/8/docs/api/java/util/Optional.html" target="_blank" rel="external">http://docs.oracle.com/javase/8/docs/api/java/util/Optional.html</a></p>
+<h2 id="Stream"><a href="#Stream" class="headerlink" title="Stream"></a>Stream</h2><p>添加的Stream API（java.util.stream）把真正的函数式编程风格引入到Java中。这是目前为止对Java类库最好的补充，因为Stream API可以极大提供Java程序员的生产力，让程序员写出高效率、干净、简洁的代码。<br>Stream 不是集合元素，它不是数据结构并不保存数据，它是有关算法和计算的，它更像一个高级版本的 Iterator。原始版本的 Iterator，用户只能显式地一个一个遍历元素并对其执行某些操作；高级版本的 Stream，用户只要给出需要对其包含的元素执行什么操作，Stream 会隐式地在内部进行遍历，做出相应的数据转换。<br>Stream 就如同一个迭代器（Iterator），单向，不可往复，数据只能遍历一次，遍历过一次后即用尽了，就好比流水从面前流过，一去不复返。<br>Stream 可以并行化操作，迭代器只能命令式地、串行化操作。顾名思义，当使用串行方式去遍历时，每个 item 读完后再读下一个 item。而使用并行去遍历时，数据会被分成多个段，其中每一个都在不同的线程中处理，然后将结果一起输出。Stream 的并行操作依赖于 Java7 中引入的 Fork/Join 框架来拆分任务和加速处理过程。<br>当使用一个流的时候，通常包括三个基本步骤：<br>获取一个数据源（source）→ 数据转换→执行操作获取想要的结果，每次转换原有 Stream 对象不改变，返回一个新的 Stream 对象（可以有多次转换），这就允许对其操作可以像链条一样排列，变成一个管道。<br><img src="/img/java8-stream_0.png" alt="示意图"></p>
+]]></content>
+      
+        <categories>
+            
+            <category> Java </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> Java </tag>
             
         </tags>
         
@@ -459,9 +556,9 @@
         
         <tags>
             
-            <tag> Linux </tag>
-            
             <tag> Java </tag>
+            
+            <tag> Linux </tag>
             
         </tags>
         
@@ -533,9 +630,9 @@
         
         <tags>
             
-            <tag> MySQL </tag>
-            
             <tag> Java </tag>
+            
+            <tag> MySQL </tag>
             
         </tags>
         
@@ -611,9 +708,9 @@
         
         <tags>
             
-            <tag> 分布式 </tag>
-            
             <tag> Java </tag>
+            
+            <tag> 分布式 </tag>
             
         </tags>
         
