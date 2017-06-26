@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-05-22T11:34:31.158Z</updated>
+  <updated>2017-06-26T07:03:51.742Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -14,6 +14,38 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Linux查看系统资源占用的总结</title>
+    <link href="https://stefanma.github.io/2017/05/26/Linux%E6%9F%A5%E7%9C%8B%E7%B3%BB%E7%BB%9F%E8%B5%84%E6%BA%90%E5%8D%A0%E7%94%A8%E7%9A%84%E6%80%BB%E7%BB%93/"/>
+    <id>https://stefanma.github.io/2017/05/26/Linux查看系统资源占用的总结/</id>
+    <published>2017-05-26T03:40:59.000Z</published>
+    <updated>2017-06-26T07:03:51.742Z</updated>
+    
+    <content type="html"><![CDATA[<p>在系统维护和项目问题分析过程中，随时可能有需要查看 CPU和内存的使用率，并根据相应信息分析系统状况的需求和问题。我们需要知道和用到Linux系统资源查看命令。</p>
+<h2 id="命令：top"><a href="#命令：top" class="headerlink" title="命令：top"></a>命令：top</h2><p>top命令用来显示执行中的程序进程，使用权限是所有用户。<br><img src="/img/linux_cmd_1.png" alt="示意图"><br>第一行表示的项目依次为当前时间、系统启动时间、当前系统登录用户数目、平均负载。第二行显示的是所有启动的进程、目前运行的、挂起(Sleeping)的和无用(Zombie)的进程。第三行显示的是目前CPU的使用情况，包括系统占用的比例、用户使用比例、闲置(Idle)比例。第四行显示物理内存的使用情况，包括总的可以使用的内存、已用内存、空闲内存、缓冲区占用的内存。第五行显示交换分区使用情况，包括总的交换分区、使用的、空闲的和用于高速缓存的大小。<br>第六行显示的项目：<br>PID（Process ID）：进程标示号。<br>USER：进程所有者的用户名。<br>PR：进程的优先级别。<br>NI：进程的优先级别数值。<br>VIRT：进程占用的虚拟内存值。<br>RES：进程占用的物理内存值。<br>SHR：进程使用的共享内存值。<br>S：进程的状态，其中S表示休眠，R表示正在运行，Z表示僵死状态，N表示该进程优先值是负数。<br>%CPU：该进程占用的CPU使用率。<br>%MEM：该进程占用的物理内存和总内存的百分比。<br>TIME＋：该进程启动后占用的总的CPU时间。<br>Command：进程启动的启动命令名称，如果这一行显示不下，进程会有一个完整的命令行。</p>
+<h2 id="命令：free"><a href="#命令：free" class="headerlink" title="命令：free"></a>命令：free</h2><p>free命令用来显示内存的使用情况，使用权限是所有用户。<br>格式：free [－b－k－m] [－o] [－s delay] [－t] [－V]</p>
+<p>free -m -s5（终端会连续不断地报告内存使用情况（以MB为单位），每5秒更新一次。）<br><img src="/img/linux_cmd_2.png" alt="示意图"></p>
+<p>Mem行：total = used  + free    其中buffers和cached虽然计算在used内， 但其实为可用内存。<br>Mem下一行：used为真实已占内存，free为真实可用内存。<br>Swap：内存交换区的使用情况。</p>
+<h2 id="命令：ps-auxw-head-1-ps-auxw-sort-rn-k4-head-5"><a href="#命令：ps-auxw-head-1-ps-auxw-sort-rn-k4-head-5" class="headerlink" title="命令：ps auxw | head -1;ps auxw|sort -rn -k4|head -5"></a>命令：ps auxw | head -1;ps auxw|sort -rn -k4|head -5</h2><p>查看内存占用前五的进程<br><img src="/img/linux_cmd_3.png" alt="示意图"></p>
+<p>内存的单位是KB，VSZ是虚拟内存的占用，RSS是真实的内存的占用。<br>ps auxw：显示系统资源占用情况。<br>head -1：表示显示第一列，即标题列。<br>sort -r：表示反向排序，-n表示按数字排序，-k4表示列的第4个字符。</p>
+<h2 id="命令：pstree-pstree-p"><a href="#命令：pstree-pstree-p" class="headerlink" title="命令：pstree/pstree -p"></a>命令：pstree/pstree -p</h2><p>查看进程树，ps aux查看进程，如果进程太多看起来很不方便，可以使用pstree以树形方式显示正在运行的所有进程。<br><img src="/img/linux_cmd_4.png" alt="示意图"></p>
+]]></content>
+    
+    <summary type="html">
+    
+      在项目中用到的查看Linux的系统资源占用
+    
+    </summary>
+    
+      <category term="Linux" scheme="https://stefanma.github.io/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="https://stefanma.github.io/tags/Linux/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
+    
+  </entry>
   
   <entry>
     <title>分布式系统数据一致性的思考（一）</title>
@@ -61,13 +93,19 @@
     <link href="https://stefanma.github.io/2017/03/06/Zookeeper%E7%B3%BB%E5%88%97%E5%AD%A6%E4%B9%A0%EF%BC%9A%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B%E5%92%8C%E7%89%B9%E7%82%B9/"/>
     <id>https://stefanma.github.io/2017/03/06/Zookeeper系列学习：数据模型和特点/</id>
     <published>2017-03-06T11:51:17.000Z</published>
-    <updated>2017-06-09T02:29:13.853Z</updated>
+    <updated>2017-06-26T03:34:26.476Z</updated>
     
     <content type="html"><![CDATA[<h2 id="ZooKeeper数据模型"><a href="#ZooKeeper数据模型" class="headerlink" title="ZooKeeper数据模型"></a>ZooKeeper数据模型</h2><p>紧接着上一篇的概述中所写的数据模型的概述，接下来对数据模型比较详细的阐述。</p>
 <p>ZooKeeper的数据模型，在结构上和标准文件系统的非常相似，都是采用树形层次结构，ZooKeeper树中的每个节点被称为—Znode。和文件系统的目录树一样，ZooKeeper目录树中每一个节点对应一个Znode，ZooKeeper树中的每个节点可以拥有子节点。每个Znode上可存储少量数据。用户对Znode具有增、删、改、查等操作（权限允许的情况下）。<br>Znode具有原子性操作，每个Znode的数据将被原子性地读写，读操作会读取与Znode相关的所有数据，写操作会一次性替换所有数据。<br>每个Znode维护着一个属性结构，它包含着版本号(dataVersion)，时间戳(ctime,mtime)等状态信息。ZooKeeper正是使用节点的这些特性来实现它的某些特定功能。每当Znode的数据改变时，他相应的版本号将会增加。每当客户端检索数据时，它将同时检索数据的版本号。并且如果一个客户端执行了某个节点的更新或删除操作，他也必须提供要被操作的数据版本号。如果所提供的数据版本号与实际不匹配，那么这个操作将会失败。</p>
 <p>Znode是客户端访问ZooKeeper的主要实体，它包含以下几个特征：<br>（1）Watches<br>客户端可以在节点上设置watch(我们称之为监视器)。当节点状态发生改变时(数据的增、删、改)将会触发watch所对应的操作。当watch被触发时，ZooKeeper将会向客户端发送且仅发送一条通知，因为watch只能被触发一次。<br>（2）数据访问<br>ZooKeeper中的每个节点存储的数据要被原子性的操作。也就是说读操作将获取与节点相关的所有数据，写操作也将替换掉节点的所有数据。另外，每一个节点都拥有自己的ACL(访问控制列表)，这个列表规定了用户的权限，即限定了特定用户对目标节点可以执行的操作。<br>（3）Znode节点类型<br>ZooKeeper中的节点有两种，分别为临时节点和永久节点。节点的类型在创建时即被确定，并且不能改变。<br>①临时节点：该节点的生命周期依赖于创建它们的会话。一旦会话(Session)结束，临时节点将被自动删除，当然可以也可以手动删除。虽然每个临时的Znode都会绑定到一个客户端会话，但他们对所有的客户端还是可见的。另外，ZooKeeper的临时节点不允许拥有子节点。<br>②永久节点：该节点的生命周期不依赖于会话，并且只有在客户端显示执行删除操作的时候，他们才能被删除。<br>ZooKeeper的永久节点：该节点的生命周期不依赖于会话，并且只有在客户端显示执行删除操作的时候，他们才能被删除。<br>（4）顺序节点（唯一性的保证）<br>当创建Znode的时候，用户可以请求在ZooKeeper的路径结尾添加一个递增的计数。这个计数对于此节点的父节点来说是唯一的，它的格式为”%10d”(10位数字，没有数值的数位用0补充，例如”0000000001”)。当计数值大于2^32-1时，计数器将溢出。<br>org.apache.zookeeper.CreateMode中定义了四种节点类型，分别对应：<br>PERSISTENT：永久节点<br>EPHEMERAL：临时节点<br>PERSISTENT_SEQUENTIAL：永久节点、序列化<br>EPHEMERAL_SEQUENTIAL：临时节点、序列化<br><img src="/img/zookeeper_1.png" alt="示意图"></p>
 <h2 id="ZooKeeper服务中的操作"><a href="#ZooKeeper服务中的操作" class="headerlink" title="ZooKeeper服务中的操作"></a>ZooKeeper服务中的操作</h2><p>在ZooKeeper中有9个基本操作:<br><img src="/img/zookeeper_2.png" alt="示意图"><br>更新ZooKeeper操作是有限制的。delete或setData必须明确要更新的Znode的版本号，我们可以调用exists找到。如果版本号不匹配，更新将会失败。<br>更新ZooKeeper操作是非阻塞式的。因此客户端如果失去了一个更新（由于另一个进程在同时更新这个Znode），他可以在不阻塞其他进程执行的情况下，选择重新尝试或进行其他操作。<br>尽管ZooKeeper可以被看做是一个文件系统，但是处于便利，摒弃了一些文件系统地操作原语。因为文件非常的小并且使整体读写的，所以不需要打开、关闭或是寻地的操作。</p>
+<p>每个Znode由3部分组成:<br>1.stat：此为状态信息, 描述该znode的版本, 权限等信息。<br>2.data：与该znode关联的数据。<br>3.children：该znode下的子节点。</p>
 <p>Zonde总结<br>（1）Znode中的数据可以有多个版本，在查询该Znode数据时就需要带上版本信息。如：set path version / delete path version<br>（2）Znode可以是临时Znode，由create -e 生成的节点，一旦创建这个Znode的client与server断开连接，该Znode将被自动删除。<br>client和server之间通过heartbeat来确认连接正常，这种状态称之为session，断开连接后session失效。<br>（3）临时Znode不能有子Znode。<br>（4）Znode可以自动编号，由create -s 生成的节点，例如在 create -s /app/node 已存在时，将会生成 /app/node00<em>*</em>001节点。<br>（5）Znode可以被监控，该目录下某些信息的修改，例如节点数据、子节点变化等，可以主动通知监控注册的client。事实上，通过这个特性，可以完成许多重要应用，例如配置管理、信息同步、分布式锁等等。</p>
+<h2 id="ACL对Znode进行访问控制"><a href="#ACL对Znode进行访问控制" class="headerlink" title="ACL对Znode进行访问控制"></a>ACL对Znode进行访问控制</h2><p>ZooKeeper使用ACL来对Znode进行访问控制。ACL的实现和Unix文件访问许可非常相似：它使用许可位来对一个节点的不同操作进行允许或禁止的权限控制。但是，和标准的Unix许可不同的是，Zookeeper对于用户类别的区分，不止局限于所有者(owner)、组 (group)、所有人(world)三个级别。Zookeeper中，数据节点没有“所有者”的概念。访问者利用id标识自己的身份，并获得与之相应的不同的访问权限。</p>
+<p>ZooKeeper的节点有5种操作权限：<br>CREATE、READ、WRITE、DELETE、ADMIN 也就是 增、删、改、查、管理权限，这5种权限简写为crwda(即：每个单词的首字符缩写)。<br><img src="/img/zookeeper_2.png" alt="示意图"></p>
+<blockquote>
+<p>注：这5种权限中，delete是指对子节点的删除权限，其它4种权限指对自身节点的操作权限。</p>
+</blockquote>
 ]]></content>
     
     <summary type="html">
@@ -246,9 +284,9 @@
       <category term="Redis" scheme="https://stefanma.github.io/categories/Redis/"/>
     
     
-      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
-    
       <category term="Redis" scheme="https://stefanma.github.io/tags/Redis/"/>
+    
+      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
     
   </entry>
   
@@ -289,13 +327,21 @@
     <link href="https://stefanma.github.io/2016/10/12/Java8%E6%96%B0%E7%89%B9%E6%80%A7%E7%AE%80%E8%BF%B0/"/>
     <id>https://stefanma.github.io/2016/10/12/Java8新特性简述/</id>
     <published>2016-10-12T09:17:02.000Z</published>
-    <updated>2017-06-12T11:49:57.595Z</updated>
+    <updated>2017-06-26T11:08:37.596Z</updated>
     
     <content type="html"><![CDATA[<p>Java8已经公布了比较长的一段时间，在项目中应用的比较多，接下来对Java8在项目中常应用到的一些特性做比较简要的概述。</p>
 <h2 id="Optional"><a href="#Optional" class="headerlink" title="Optional"></a>Optional</h2><p>到目前为止，空指针异常是导致Java应用程序失败的最常见原因。以前，为了解决空指针异常，Google公司著名的Guava项目引入了Optional类，Guava通过使用检查空值的方式来防止代码污染，它鼓励程序员写更干净的代码。受到Google Guava的启发，Optional类已经成为Java 8类库的一部分。Optional实际上是个容器：它可以保存类型T的值，或者仅仅保存null。<br>代码样例：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span> </span>&#123;</div><div class="line">    <span class="comment">//创建Optional实例，也可以通过方法返回值得到。</span></div><div class="line">    Optional&lt;String&gt; name = Optional.of(<span class="string">"Optional string value"</span>);</div><div class="line">    <span class="comment">//创建没有值的Optional实例，例如值为'null'</span></div><div class="line">    Optional empty = Optional.ofNullable(<span class="keyword">null</span>);</div><div class="line">    <span class="comment">//isPresent方法用来检查Optional实例是否有值。</span></div><div class="line">    <span class="keyword">if</span> (name.isPresent()) &#123;</div><div class="line">        <span class="comment">//调用get()返回Optional值。</span></div><div class="line">        System.out.println(name.get());</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        <span class="comment">//在Optional实例上调用get()抛出NoSuchElementException。</span></div><div class="line">        System.out.println(empty.get());</div><div class="line">    &#125; <span class="keyword">catch</span> (NoSuchElementException ex) &#123;</div><div class="line">        System.out.println(ex.getMessage());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">//如果Optional值不为空，lambda表达式会处理并在其上执行操作。</span></div><div class="line">    name.ifPresent((value) -&gt; &#123;</div><div class="line">        System.out.println(<span class="string">"The length of the value is: "</span> + value.length());</div><div class="line">    &#125;);</div><div class="line"></div><div class="line">    <span class="comment">//如果有值orElse方法会返回Optional实例，否则返回传入的错误信息。</span></div><div class="line">    System.out.println(empty.orElse(<span class="string">"empty.orElse, There is no value present!"</span>));</div><div class="line">    System.out.println(name.orElse(<span class="string">" name.orElse, There is some value!"</span>));</div><div class="line"></div><div class="line">    <span class="comment">//orElseGet与orElse类似，区别在于传入的默认值。</span></div><div class="line">    <span class="comment">//orElseGet接受lambda表达式生成默认值。</span></div><div class="line">    System.out.println(empty.orElseGet(() -&gt; <span class="string">"empty.orElseGet,Default Value"</span>));</div><div class="line">    System.out.println(name.orElseGet(() -&gt; <span class="string">"name.orElseGet,Default Value"</span>));</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">//filter方法检查给定的Option值是否满足某些条件。</span></div><div class="line">    <span class="comment">//如果满足则返回同一个Option实例，否则返回空Optional。</span></div><div class="line">    Optional&lt;String&gt; longName = name.filter((value) -&gt; value.length() &gt; <span class="number">26</span>);</div><div class="line">    System.out.println(longName.orElse(<span class="string">"The name is less than 26 characters"</span>));</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>1）of方法通过工厂方法创建Optional类。需要注意的是，创建对象时传入的参数不能为null。如果传入参数为null，则抛出NullPointerException 。<br>2）ofNullable与of方法相似，唯一的区别是可以接受参数为null的情况。<br>3）isPresent如果值存在返回true，否则返回false。<br>4）get方法用来得到Optional实例中的值。下面我们看一个抛出NoSuchElementException。<br>5）ifPresent方法，首先需要了解Consumer类。简答地说，Consumer类包含一个抽象方法。该抽象方法对传入的值进行处理，但没有返回值。<br>6）orElse如果有值则将其返回，否则返回指定的其它值。<br>7）orElseGet与orElse方法类似，区别在于得到的默认值。orElse方法将传入的字符串作为默认值，orElseGet方法可以接受Supplier接口的实现用来生成默认值。<br>8）map方法用来对Optional实例的值执行一系列操作。通过一组实现了Function接口的lambda表达式传入操作。<br>9）flatMap如果有值，为其执行mapping函数返回Optional类型返回值，否则返回空Optional。flatMap与map（Funtion）方法类似，区别在于flatMap中的mapper返回值必须是Optional。调用结束时，flatMap不会对结果用Optional封装。<br>10）filter如果有值并且满足断言条件返回包含该值的Optional，否则返回空Optional。</p>
 <p>官方文档：<br><a href="http://docs.oracle.com/javase/8/docs/api/java/util/Optional.html" target="_blank" rel="external">http://docs.oracle.com/javase/8/docs/api/java/util/Optional.html</a></p>
 <h2 id="Stream"><a href="#Stream" class="headerlink" title="Stream"></a>Stream</h2><p>添加的Stream API（java.util.stream）把真正的函数式编程风格引入到Java中。这是目前为止对Java类库最好的补充，因为Stream API可以极大提供Java程序员的生产力，让程序员写出高效率、干净、简洁的代码。<br>Stream 不是集合元素，它不是数据结构并不保存数据，它是有关算法和计算的，它更像一个高级版本的 Iterator。原始版本的 Iterator，用户只能显式地一个一个遍历元素并对其执行某些操作；高级版本的 Stream，用户只要给出需要对其包含的元素执行什么操作，Stream 会隐式地在内部进行遍历，做出相应的数据转换。<br>Stream 就如同一个迭代器（Iterator），单向，不可往复，数据只能遍历一次，遍历过一次后即用尽了，就好比流水从面前流过，一去不复返。<br>Stream 可以并行化操作，迭代器只能命令式地、串行化操作。顾名思义，当使用串行方式去遍历时，每个 item 读完后再读下一个 item。而使用并行去遍历时，数据会被分成多个段，其中每一个都在不同的线程中处理，然后将结果一起输出。Stream 的并行操作依赖于 Java7 中引入的 Fork/Join 框架来拆分任务和加速处理过程。<br>当使用一个流的时候，通常包括三个基本步骤：<br>获取一个数据源（source）→ 数据转换→执行操作获取想要的结果，每次转换原有 Stream 对象不改变，返回一个新的 Stream 对象（可以有多次转换），这就允许对其操作可以像链条一样排列，变成一个管道。<br><img src="/img/java8-stream_0.png" alt="示意图"></p>
+<p>相关文档：<br><a href="https://www.ibm.com/developerworks/cn/java/j-lo-java8streamapi/" target="_blank" rel="external">https://www.ibm.com/developerworks/cn/java/j-lo-java8streamapi/</a></p>
+<h2 id="Lambda-表达式"><a href="#Lambda-表达式" class="headerlink" title="Lambda 表达式"></a>Lambda 表达式</h2><p>简单的来讲，Lambda表达式是一个能够被传递的匿名函数。允许把函数作为一个方法的参数（函数作为参数传递进方法中）。<br>Java 8 lambda表达式的语法：<br>(params) -&gt; expression<br>(params) -&gt; statement<br>(params) -&gt; { statements }</p>
+<h3 id="使用Lambda表达式进行事件处理"><a href="#使用Lambda表达式进行事件处理" class="headerlink" title="使用Lambda表达式进行事件处理"></a>使用Lambda表达式进行事件处理</h3><p>可以用lambda表达式写出更好的事件监听代码，如下所示：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Java 8之前：</span></div><div class="line">JButton show =  <span class="keyword">new</span> JButton(<span class="string">"Show"</span>);</div><div class="line">show.addActionListener(<span class="keyword">new</span> ActionListener() &#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">actionPerformed</span><span class="params">(ActionEvent e)</span> </span>&#123;</div><div class="line">    System.out.println(<span class="string">"Event handling without lambda expression is boring"</span>);</div><div class="line">    &#125;</div><div class="line">&#125;);</div><div class="line"></div><div class="line"><span class="comment">// Java 8方式：</span></div><div class="line">show.addActionListener((e) -&gt; &#123;</div><div class="line">    System.out.println(<span class="string">"Light, Camera, Action !! Lambda expressions Rocks"</span>);</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<h3 id="使用Lambda表达式对列表进行迭代"><a href="#使用Lambda表达式对列表进行迭代" class="headerlink" title="使用Lambda表达式对列表进行迭代"></a>使用Lambda表达式对列表进行迭代</h3><p>针对集合类，最常见的操作就是进行迭代，并将业务逻辑应用于各个元素，例如处理订单、交易和事件的列表。由于Java是命令式语言，Java 8之前的所有循环代码都是顺序的，即可以对其元素进行并行化处理。如果你想做并行过滤，就需要自己写代码，这并不是那么容易。通过引入lambda表达式和默认方法，将做什么和怎么做的问题分开了，这意味着Java集合现在知道怎样做迭代，并可以在API层面对集合元素进行并行处理。<br>可以看到列表现在有了一个 forEach()方法，它可以迭代所有对象，并将你的lambda代码应用在其中：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Java 8之前：</span></div><div class="line">List features = Arrays.asList(<span class="string">"Lambdas"</span>, <span class="string">"Default Method"</span>, <span class="string">"Stream API"</span>, <span class="string">"Date and Time API"</span>);</div><div class="line"><span class="keyword">for</span> (String feature : features) &#123;</div><div class="line">    System.out.println(feature);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// Java 8之后：</span></div><div class="line">List features = Arrays.asList(<span class="string">"Lambdas"</span>, <span class="string">"Default Method"</span>, <span class="string">"Stream API"</span>, <span class="string">"Date and Time API"</span>);</div><div class="line">features.forEach(n -&gt; System.out.println(n));</div><div class="line"> </div><div class="line"><span class="comment">// 使用Java 8的方法引用更方便，方法引用由::双冒号操作符标示，</span></div><div class="line">features.forEach(System.out::println);</div></pre></td></tr></table></figure></p>
+<p>列表循环的最后一个例子展示了如何在Java 8中使用方法引用（method reference）。</p>
+<h3 id="使用Lambda表达式和函数式接口Predicate"><a href="#使用Lambda表达式和函数式接口Predicate" class="headerlink" title="使用Lambda表达式和函数式接口Predicate"></a>使用Lambda表达式和函数式接口Predicate</h3><p>Java 8也添加了一个包，叫做 java.util.function。它包含了很多类，用来支持Java的函数式编程。其中一个便是Predicate，使用 java.util.function.Predicate 函数式接口以及lambda表达式，可以向API方法添加逻辑，用更少的代码支持更多的动态行为。<br>Predicate接口非常适用于做过滤：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(args[])</span></span>&#123;</div><div class="line">    List languages = Arrays.asList(<span class="string">"Java"</span>, <span class="string">"Scala"</span>, <span class="string">"C++"</span>, <span class="string">"Haskell"</span>, <span class="string">"Lisp"</span>);</div><div class="line"> </div><div class="line">    System.out.println(<span class="string">"Languages which starts with J :"</span>);</div><div class="line">    filter(languages, (str)-&gt;str.startsWith(<span class="string">"J"</span>));</div><div class="line"> </div><div class="line">    System.out.println(<span class="string">"Languages which ends with a "</span>);</div><div class="line">    filter(languages, (str)-&gt;str.endsWith(<span class="string">"a"</span>));</div><div class="line"> </div><div class="line">    System.out.println(<span class="string">"Print all languages :"</span>);</div><div class="line">    filter(languages, (str)-&gt;<span class="keyword">true</span>);</div><div class="line"> </div><div class="line">    System.out.println(<span class="string">"Print no language : "</span>);</div><div class="line">    filter(languages, (str)-&gt;<span class="keyword">false</span>);</div><div class="line"> </div><div class="line">    System.out.println(<span class="string">"Print language whose length greater than 4:"</span>);</div><div class="line">    filter(languages, (str)-&gt;str.length() &gt; <span class="number">4</span>);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// Java 8之前：</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">filter</span><span class="params">(List names, Predicate condition)</span> </span>&#123;</div><div class="line">    <span class="keyword">for</span>(String name: names)  &#123;</div><div class="line">        <span class="keyword">if</span>(condition.test(name)) &#123;</div><div class="line">            System.out.println(name + <span class="string">" "</span>);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 更好的办法</span></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">filter</span><span class="params">(List names, Predicate condition)</span> </span>&#123;</div><div class="line">    names.stream().filter((name) -&gt; (condition.test(name))).forEach((name) -&gt; &#123;</div><div class="line">        System.out.println(name + <span class="string">" "</span>);</div><div class="line">    &#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="使用Lambda表达式的Map和Reduce"><a href="#使用Lambda表达式的Map和Reduce" class="headerlink" title="使用Lambda表达式的Map和Reduce"></a>使用Lambda表达式的Map和Reduce</h3><p>map将集合类（例如列表）元素进行转换的。还有一个 reduce()函数可以将所有值合并成一个。Map和Reduce操作是函数式编程的核心操作，因为其功能，reduce又被称为折叠操作。另外，reduce 并不是一个新的操作，你有可能已经在使用它。SQL中类似 sum()、avg()或者 count()的聚集函数，实际上就是reduce操作，因为它们接收多个值并返回一个值。流API定义的 reduceh() 函数可以接受lambda表达式，并对所有值进行合并。IntStream这样的类有类似 average()、count()、sum()的内建方法来做reduce 操作，也有mapToLong()、mapToDouble()方法来做转换。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 为每个订单加上12%的税</span></div><div class="line"><span class="comment">// 老方法：</span></div><div class="line">List costBeforeTax = Arrays.asList(<span class="number">100</span>, <span class="number">200</span>, <span class="number">300</span>, <span class="number">400</span>, <span class="number">500</span>);</div><div class="line"><span class="keyword">double</span> total = <span class="number">0</span>;</div><div class="line"><span class="keyword">for</span> (Integer cost : costBeforeTax) &#123;</div><div class="line">    <span class="keyword">double</span> price = cost + .<span class="number">12</span>*cost;</div><div class="line">    total = total + price;</div><div class="line">&#125;</div><div class="line">System.out.println(<span class="string">"Total : "</span> + total);</div><div class="line"> </div><div class="line"><span class="comment">// 新方法：</span></div><div class="line">List costBeforeTax = Arrays.asList(<span class="number">100</span>, <span class="number">200</span>, <span class="number">300</span>, <span class="number">400</span>, <span class="number">500</span>);</div><div class="line"><span class="keyword">double</span> bill = costBeforeTax.stream().map((cost) -&gt; cost + .<span class="number">12</span>*cost).reduce((sum, cost) -&gt; sum + cost).get();</div><div class="line">System.out.println(<span class="string">"Total : "</span> + bill);</div></pre></td></tr></table></figure></p>
+<h3 id="过滤创建一个String列表"><a href="#过滤创建一个String列表" class="headerlink" title="过滤创建一个String列表"></a>过滤创建一个String列表</h3><p>过滤在大规模集合上的一个常用操作，而现在使用lambda表达式和流API过滤大规模数据集合是惊人的简单。流提供了一个 filter() 方法，接受一个 Predicate 对象，即可以传入一个lambda表达式作为过滤逻辑。下面的例子是用lambda表达式过滤Java集合：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 创建一个字符串列表，每个字符串长度大于2</span></div><div class="line">List&lt;String&gt; filtered = strList.stream().filter(x -&gt; x.length()&gt; <span class="number">2</span>).collect(Collectors.toList());</div><div class="line">System.out.printf(<span class="string">"Original List : %s, filtered list : %s %n"</span>, strList, filtered);</div></pre></td></tr></table></figure></p>
 ]]></content>
     
     <summary type="html">
@@ -598,9 +644,9 @@
       <category term="Linux" scheme="https://stefanma.github.io/categories/Linux/"/>
     
     
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
       <category term="Linux" scheme="https://stefanma.github.io/tags/Linux/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
   </entry>
   
@@ -794,34 +840,6 @@
       <category term="MySQL" scheme="https://stefanma.github.io/tags/MySQL/"/>
     
       <category term="SQL" scheme="https://stefanma.github.io/tags/SQL/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Hello World</title>
-    <link href="https://stefanma.github.io/2016/05/03/hello-world/"/>
-    <id>https://stefanma.github.io/2016/05/03/hello-world/</id>
-    <published>2016-05-03T13:27:57.000Z</published>
-    <updated>2017-03-05T14:49:33.553Z</updated>
-    
-    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<a id="more"></a> 
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new <span class="string">"My New Post"</span></div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo server</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt; for more info. If you get any problems when using Hexo, you can find the answer in &lt;a href=&quot;https://hexo.io/docs/troubleshooting.html&quot;&gt;troubleshooting&lt;/a&gt; or you can ask me on &lt;a href=&quot;https://github.com/hexojs/hexo/issues&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
-    
-    </summary>
-    
     
   </entry>
   
