@@ -93,7 +93,7 @@
     <link href="https://stefanma.github.io/2017/03/06/Zookeeper%E7%B3%BB%E5%88%97%E5%AD%A6%E4%B9%A0%EF%BC%9A%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B%E5%92%8C%E7%89%B9%E7%82%B9/"/>
     <id>https://stefanma.github.io/2017/03/06/Zookeeper系列学习：数据模型和特点/</id>
     <published>2017-03-06T11:51:17.000Z</published>
-    <updated>2017-06-26T03:34:26.476Z</updated>
+    <updated>2017-06-26T11:15:42.805Z</updated>
     
     <content type="html"><![CDATA[<h2 id="ZooKeeper数据模型"><a href="#ZooKeeper数据模型" class="headerlink" title="ZooKeeper数据模型"></a>ZooKeeper数据模型</h2><p>紧接着上一篇的概述中所写的数据模型的概述，接下来对数据模型比较详细的阐述。</p>
 <p>ZooKeeper的数据模型，在结构上和标准文件系统的非常相似，都是采用树形层次结构，ZooKeeper树中的每个节点被称为—Znode。和文件系统的目录树一样，ZooKeeper目录树中每一个节点对应一个Znode，ZooKeeper树中的每个节点可以拥有子节点。每个Znode上可存储少量数据。用户对Znode具有增、删、改、查等操作（权限允许的情况下）。<br>Znode具有原子性操作，每个Znode的数据将被原子性地读写，读操作会读取与Znode相关的所有数据，写操作会一次性替换所有数据。<br>每个Znode维护着一个属性结构，它包含着版本号(dataVersion)，时间戳(ctime,mtime)等状态信息。ZooKeeper正是使用节点的这些特性来实现它的某些特定功能。每当Znode的数据改变时，他相应的版本号将会增加。每当客户端检索数据时，它将同时检索数据的版本号。并且如果一个客户端执行了某个节点的更新或删除操作，他也必须提供要被操作的数据版本号。如果所提供的数据版本号与实际不匹配，那么这个操作将会失败。</p>
@@ -106,6 +106,7 @@
 <blockquote>
 <p>注：这5种权限中，delete是指对子节点的删除权限，其它4种权限指对自身节点的操作权限。</p>
 </blockquote>
+<p>更新ZooKeeper操作是有限制的。delete或setData必须明确要更新的Znode的版本号，我们可以调用exists找到。如果版本号不匹配，更新将会失败。<br>更新ZooKeeper操作是非阻塞式的。因此客户端如果失去了一个更新(由于另一个进程在同时更新这个Znode)，他可以在不阻塞其他进程执行的情况下，选择重新尝试或进行其他操作。<br>尽管ZooKeeper可以被看做是一个文件系统，但是处于便利，摒弃了一些文件系统地操作原语。因为文件非常的小并且使整体读写的，所以不需要打开、关闭或是寻地的操作。</p>
 ]]></content>
     
     <summary type="html">
@@ -319,6 +320,78 @@
       <category term="区块链" scheme="https://stefanma.github.io/tags/%E5%8C%BA%E5%9D%97%E9%93%BE/"/>
     
       <category term="Blockchain" scheme="https://stefanma.github.io/tags/Blockchain/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>中国债券市场</title>
+    <link href="https://stefanma.github.io/2017/01/10/%E4%B8%AD%E5%9B%BD%E5%80%BA%E5%88%B8%E5%B8%82%E5%9C%BA/"/>
+    <id>https://stefanma.github.io/2017/01/10/中国债券市场/</id>
+    <published>2017-01-10T03:36:41.000Z</published>
+    <updated>2017-06-27T03:45:48.750Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="中国债券市场分布"><a href="#中国债券市场分布" class="headerlink" title="中国债券市场分布"></a>中国债券市场分布</h2><p><img src="/img/bond_info_1.jpg" alt="示意图"></p>
+<h2 id="债券在投资组合中的位置"><a href="#债券在投资组合中的位置" class="headerlink" title="债券在投资组合中的位置"></a>债券在投资组合中的位置</h2><p><img src="/img/bond_info_2.jpg" alt="示意图"></p>
+<h2 id="不同国债的异同点"><a href="#不同国债的异同点" class="headerlink" title="不同国债的异同点"></a>不同国债的异同点</h2><p><img src="/img/bond_info_3.jpg" alt="示意图"></p>
+<h2 id="记帐式国债的发行"><a href="#记帐式国债的发行" class="headerlink" title="记帐式国债的发行"></a>记帐式国债的发行</h2><p><img src="/img/bond_info_4.jpg" alt="示意图"></p>
+]]></content>
+    
+    <summary type="html">
+    
+      在做债券项目，对中国的债券市场做些了解
+    
+    </summary>
+    
+      <category term="Finance" scheme="https://stefanma.github.io/categories/Finance/"/>
+    
+    
+      <category term="Finance" scheme="https://stefanma.github.io/tags/Finance/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>债券分类,术语和债券的含义及特征</title>
+    <link href="https://stefanma.github.io/2016/12/27/%E5%80%BA%E5%88%B8%E5%88%86%E7%B1%BB%E5%92%8C%E6%9C%AF%E8%AF%AD/"/>
+    <id>https://stefanma.github.io/2016/12/27/债券分类和术语/</id>
+    <published>2016-12-27T08:56:24.000Z</published>
+    <updated>2017-06-27T03:37:29.129Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="债券分类"><a href="#债券分类" class="headerlink" title="债券分类"></a>债券分类</h2><h3 id="记账式债券"><a href="#记账式债券" class="headerlink" title="记账式债券"></a>记账式债券</h3><p>记账式债券是指没有实物形态的票券，投资者持有的国债登记于证券账户中，投资者仅取得收据或对账单以证实其所有权的一种国债。在我国，上海证券交易所和深圳证券交易所已为证券投资者建立电脑证券账户，因此，可以利用证券交易所的系统来发行债券。我国近年来通过沪、深交易所的交易系统发行和交易的记账式国债就是这方面的实例。如果投资者进行记账式债券的买卖，就必须在证券交易所设立账户。所以，记账式国债又称无纸化国债。</p>
+<h3 id="凭证式国债"><a href="#凭证式国债" class="headerlink" title="凭证式国债"></a>凭证式国债</h3><p>凭证式债券的形式是一种债权人认购债券的收款凭证，而不是债券发行人制定的标准格式的债券。我国近年通过银行系统发行的凭证式国债，券面上不印制票面金额（而是根据认购者的认购额填写实际的缴款金额），是一种国家储蓄债，可记名、挂失，以“凭证式国债收款凭证”记录债权，不能上市流通，从购买之日起计息。在持有期内，持券人如果遇到特殊情况，需要提取现金，可以到购买网点提前兑取。提前兑取时，除偿还本金外，利息按实际持有天数及相应的利率档次计算，经办机构按兑付本金的0.2%收取手续费。</p>
+<h3 id="无记名式国债"><a href="#无记名式国债" class="headerlink" title="无记名式国债"></a>无记名式国债</h3><p>无记名式国债是一种票面上不记载债权人姓名或单位名称的债券，通常以实物券形式出现，又称实物券或国库券。实物债券是一种具有标准格式实物券面的债券。在标准格式的债券券面上，一般印有债券面额、债券利率、债券期限、债券发行人全称、还本付息方式等各种债券票面要素。有时，债券利率、债券期限等要素也可以通过公告向社会公布，而不再在债券券面上注明。</p>
+<h3 id="储蓄国债"><a href="#储蓄国债" class="headerlink" title="储蓄国债"></a>储蓄国债</h3><p>所谓储蓄国债，是政府面向个人投资者发行、以吸收个人储蓄资金为目的，满足长期储蓄性投资需求的不可流通记名国债品种。</p>
+<h3 id="企业债券"><a href="#企业债券" class="headerlink" title="企业债券"></a>企业债券</h3><p>企业债券为中华人民共和国国内具有法人资格的企业为筹集生产与建设资金，依照法定程序发行，约定在一定期限内还本付息的债务凭证。在中国，企业债券泛指各种所有制企业发行的债券。在西方国家，由于只有股份公司才能发行企业债券，企业债券即公司债券，它包括的范围较广，如可转换债券和资产支持证券等。</p>
+<h3 id="可转换公司债"><a href="#可转换公司债" class="headerlink" title="可转换公司债"></a>可转换公司债</h3><p>可转换公司债是指发行人依照法定程序发行，在一定期限内依据约定的条件可以转换成股份的公司债券。这种债券享受转换特权，在转换前是公司债形式，转换后相当于增发了股票。可转换公司债兼有债权和股权的双重性质。</p>
+<h3 id="金融债券"><a href="#金融债券" class="headerlink" title="金融债券"></a>金融债券</h3><p>金融债券是指银行及非银行金融机构依照法定程序发行并约定在一定期限内还本付息的有价证券。金融机构的资金来源很大部分靠吸收存款，但有时它们为改变资产负债结构或者用于某种特定用途，也有可能发行债券以增加资金来源。</p>
+<h3 id="国际债券"><a href="#国际债券" class="headerlink" title="国际债券"></a>国际债券</h3><p>国际债券是一种在国际上直接融通资金的金融工具，是一国政府、金融机构、工商企业或国际性组织为筹集中长期资金而在国外金融市场发行的，以外国货币为面值币种的债券。国际债券的发行者与发行地不在同一个国家，因此债券的债务人和债权人也分属不同的国家。</p>
+<h2 id="债券专业术语"><a href="#债券专业术语" class="headerlink" title="债券专业术语"></a>债券专业术语</h2><h3 id="债券面值"><a href="#债券面值" class="headerlink" title="债券面值"></a>债券面值</h3><p>债券面值，是指债券发行时所设定的票面金额，它代表着发行人借入并承诺于未来某一特定日期（如债券到期日），偿付给债券持有人的金额。<br>当然，债券面值和投资者购买国债而借给债券发行人的总金额是不同的。实际上，这是投资债券的本金而不是债券面值。<br>目前，我国发行的债券，一般是每张面额为100元，10 000元的本金就可以买10张债券（这种情况出现只适用于平价发行，溢价发行和折价发行则另作别论。三种发行价格之间的区别将在下一章专门讨论）。这里的”每张面额100元”，就可以理解为债券的面值。在进行债券交易时，通过统计某种债券交易的数量，可以清楚地表明债券的交易金额。<br>在债券的票面价值中，首先要规定票面价值的币种，即以何种货币作为债券价值的计量标准。确定币种主要考虑债券的发行对象。一般来说，在国内发行的债券通常以本国本位货币作为面值的计量单位；在国际金融市场筹资，则通常以债券发行地所在国家或地区的货币或以国际上通用的货币为计量标准。<br>此外，确定币种还应考虑债券发行者本身对币种的需要。币种确定后，还要规定债券的票面金额。票面金额的大小不同，可以适应不同的投资对象，同时也会产生不同的发行成本。票面金额定得较小，有利于小额投资者购买，持有者分布面广，但债券本身的印刷及发行工作量大，费用可能较高；票面金额定得较大，有利于少数大额投资者认购，且印刷费用等也会相应减少，但却使小额投资者无法参与。因此，债券票面金额的确定，也要根据债券的发行对象、市场资金供给情况及债券发行费用等因素综合考虑。</p>
+<h3 id="净价交易"><a href="#净价交易" class="headerlink" title="净价交易"></a>净价交易</h3><p>净价交易，是指债券现券买卖时，以不含应计利息的价格报价并成交的交易方式，即债券持有期已计利息不计入报价和成交价格中。在进行债券现券交易清算时，买入方除按净价计算的成交价款向卖方支付外，还要向卖方支付应计利息，在债券结算交割单中债券交易净价和应计利息分别列示。目前债券净价交易采取一步到位的办法，即交易系统直接实行净价报价，同时显示债券成交价格和应计利息额，并以两项之和为债券买卖价格；结算系统直接实行净价结算，以债券成交价格与应计利息额之和为债券结算交割价格。净价=全价-应计利息。</p>
+<h3 id="全价"><a href="#全价" class="headerlink" title="全价"></a>全价</h3><p>目前的银行间债券市场和交易所债券市场都实行净价交易。在净价交易下，现券买卖交易时，以不含应计利息的价格（净价）报价和成交，而在结算时，再采用全价价格，也就是买方除按净价支付成交价款外，还要另向卖方支付应计利息，净价和利息这两项在交割单中分别列示，以便于国债交易的税务处理。全价、净价和应计利息三者关系如下： 全价=净价+应计利息，亦即：结算价格=成交价格+应计利息。</p>
+<h3 id="债券期限"><a href="#债券期限" class="headerlink" title="债券期限"></a>债券期限</h3><p>债券的期限即在债券发行时就确定的债券还本的年限，债券的发行人到期必须偿还本金，债券持有人到期收回本金的权利得到法律的保护。债券按期限的长短可分为长期债券 . 中期债券和短期债券。长期债券期限在 10 年以上，短期债券期限一般在 1 年以内，中期债券的期限则介于二者之间。债券的期限越长，则债券持有者资金周转越慢，在银行利率上升时有可能使投资收益受到影响。债券的期限越长，债券的投资风险也越高，因此要求有较高的收益作为补偿，而收益率高的债券价格也高。所以，为了获取与所遭受的风险相对称的收益，债券的持有人当然对期限长的债券要求较高的收益率，因而长期债券价格一般要高于短期债券的价格。</p>
+<h3 id="剩余期限"><a href="#剩余期限" class="headerlink" title="剩余期限"></a>剩余期限</h3><p>剩余期限是指债券距离最终还本付息还有多长时间，一般以年为计算单位，其计算公式如下：剩余期限=（债券最终到期日-交易日）÷365</p>
+<h3 id="票面利率"><a href="#票面利率" class="headerlink" title="票面利率"></a>票面利率</h3><p>债券的票面利率即债券券面上所载明的利率，在债券到期以前的整个时期都按此利率计算和支付债息。在银行存款利息率不变的前提下，债券的票面利率越高，则债券持有人所获得的债息就越多，所以债券价格也就越高。反之，则越低。</p>
+<h3 id="应计天数"><a href="#应计天数" class="headerlink" title="应计天数"></a>应计天数</h3><p>起息日或上一理论付息日至结算日的实际天数。</p>
+<h3 id="应计利息"><a href="#应计利息" class="headerlink" title="应计利息"></a>应计利息</h3><p>应计利息是指自上一利息支付日至买卖结算日产生的利息收入，具体而言，零息债券是指发行起息日至交割日所含利息金额；附息债券是指本付息期起息日至交割日所含利息金额；贴现债券没有票面利率，其应计利息额设为零。应计利息的计算公式如下（以每百元债券所含利息额列示）： 应计利息额=票面利率÷365×已计息天数×100</p>
+<h3 id="到期收益率"><a href="#到期收益率" class="headerlink" title="到期收益率"></a>到期收益率</h3><p>到期收益率（YTM[Yield to Maturity]）是使债券上得到的所有回报的现值与债券当前价格相等的收益率。它反映了投资者如果以既定的价格投资某个债券，那么按照复利的方式，得到未来各个时期的货币收入的收益率是多少。</p>
+<h3 id="持有期收益率"><a href="#持有期收益率" class="headerlink" title="持有期收益率"></a>持有期收益率</h3><p>持有期收益率是指从购入到卖出这段特有期限里所能得到的收益率。持有期收益率和到期收益率的差别在于将来值的不同。</p>
+<h3 id="修正持久期"><a href="#修正持久期" class="headerlink" title="修正持久期"></a>修正持久期</h3><p>修正持久期是衡量价格对收益率变化的敏感度的指标。在市场利率水平发生一定幅度波动时，修正持久期越大的债券，价格波动越大（按百分比计）。</p>
+<h3 id="凸性"><a href="#凸性" class="headerlink" title="凸性"></a>凸性</h3><p>是对债券价格利率敏感性的二阶估计，是对债券久期利率敏感性的测量。在价格-收益率出现大幅度变动时，它们的波动幅度呈非线性关系。由持久期作出的预测将有所偏离。凸性就是对这个偏离的修正。无论收益率是上升还是下降，凸性所引起的修正都是正的。因此如果修正持久期相同，凸性越大越好。</p>
+<h2 id="债券有四个方面的含义"><a href="#债券有四个方面的含义" class="headerlink" title="债券有四个方面的含义"></a>债券有四个方面的含义</h2><p>发行人是借入资金的经济主体；投资者是出借资金的经济主体；发行人需要在一定时期还本付息；反映了发行者和投资者之间的债权债务关系，而且是这一关系的法律凭证。</p>
+<h3 id="基本性质"><a href="#基本性质" class="headerlink" title="基本性质"></a>基本性质</h3><h4 id="债券属于有价证券"><a href="#债券属于有价证券" class="headerlink" title="债券属于有价证券"></a>债券属于有价证券</h4><p>一方面，债券反映和代表一定的价值。债券本身有一定的面值，通常它是债券投资者投入资金的量化表现。同时，持有债券可按期取得利息，利息也是债券投资者收益的价值表现。另一方面，债券与其代表的权利联系在一起，拥有债券也就拥有了债券所代表的权利，转让债券也就将债券代表的权利一并转移。</p>
+<h4 id="债券是一种虚拟资本债券"><a href="#债券是一种虚拟资本债券" class="headerlink" title="债券是一种虚拟资本债券"></a>债券是一种虚拟资本债券</h4><p>尽管债券有面值，代表了一定的财产价值，但它也只是一种虚拟资本，而非真实资本。因为债券的本质是证明债权债务关系的证书，在债权债务关系建立时所投入的资金已被债务人占用，因此，债券是实际运用的真实资本的证书。债券的流动并不意味着它所代表的实际资本也同样流动，且债券是独立于实际资本之外的。</p>
+<h4 id="债券是债权的表现"><a href="#债券是债权的表现" class="headerlink" title="债券是债权的表现"></a>债券是债权的表现</h4><p>债券代表债券投资者的权利，这种权利不是直接支配财产，也不以资产所有权表现，而是一种债权。拥有债券的人是债权人，债权人不同于财产所有人。以公司为例，在某种意义上，财产所有人可以视作公司的内部构成分子，而债权人是与公司相对立的。债权人除了按期取得本息外，对债务人不能做其他任何干预。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      项目中要做债券项目，先对一些债券的概念做些了解
+    
+    </summary>
+    
+      <category term="Finance" scheme="https://stefanma.github.io/categories/Finance/"/>
+    
+    
+      <category term="Finance" scheme="https://stefanma.github.io/tags/Finance/"/>
     
   </entry>
   
@@ -780,66 +853,6 @@
       <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
     
       <category term="设计优化" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E4%BC%98%E5%8C%96/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>分布式锁的基本原理</title>
-    <link href="https://stefanma.github.io/2016/09/03/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86/"/>
-    <id>https://stefanma.github.io/2016/09/03/分布式锁的基本原理/</id>
-    <published>2016-09-03T03:27:57.000Z</published>
-    <updated>2017-03-05T14:49:48.098Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>目前几乎很多大型网站及应用都是分布式部署的，分布式场景中的数据一致性问题一直是一个比较重要的话题。为了保证数据的最终一致性，需要很多的技术方案来支持，比如分布式事务、分布式锁等。分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往<strong>需要互斥来防止彼此干扰来保证一致性</strong>。</p>
-<h2 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h2><p>1.假设有一个进程A，每小时准点给用户发送一条短信”Hello world”，为了高可用，就必须在多台机器上面部署多个进程，避免宕机的情况。<br>2.假设部署在两台机器，那么问题来了，用户每个小时就会收到两条”Hello world”，信息就重复了<br>3.我们希望只发送一条”Hello world”，那么就可以引入分布式锁的概念了。<br>4.进程A和进程B发送短信前先去注册一个锁，假设进程A抢到了锁，进程B就等待结果，如果发送成功了，那么就B就放弃此次任务，等待下一个小时。<br>5.问题的核心就在于怎么注册锁，检查锁的存在和注册锁是一个原子性操作，类似MySQL的主键，存在则不能insert，就说是你不能把我的锁覆盖了，你得等着。<br>6.我们有多种方式可以实现分布式锁，最简单的就是以每小时准点这个时间作为主键，到MySQL写入一条数据，利用数据库来维持一致性。</p>
-<h2 id="针对分布式锁的实现，目前比较常用的有以下几种方案："><a href="#针对分布式锁的实现，目前比较常用的有以下几种方案：" class="headerlink" title="针对分布式锁的实现，目前比较常用的有以下几种方案："></a>针对分布式锁的实现，目前比较常用的有以下几种方案：</h2><p>1.基于数据库实现分布式锁<br>2.基于缓存（redis，memcached）实现分布式锁<br>3.基于Zookeeper实现分布式锁</p>
-]]></content>
-    
-    <summary type="html">
-    
-      分布式锁的基本原理的理解和描述
-    
-    </summary>
-    
-      <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
-    
-    
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
-      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>工作中一段SQL的优化</title>
-    <link href="https://stefanma.github.io/2016/05/07/%E5%B7%A5%E4%BD%9C%E4%B8%AD%E4%B8%80%E6%AE%B5SQL%E7%9A%84%E4%BC%98%E5%8C%96/"/>
-    <id>https://stefanma.github.io/2016/05/07/工作中一段SQL的优化/</id>
-    <published>2016-05-07T10:06:51.000Z</published>
-    <updated>2017-05-04T07:33:55.984Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="优化一段逻辑SQL"><a href="#优化一段逻辑SQL" class="headerlink" title="优化一段逻辑SQL"></a>优化一段逻辑SQL</h2><p>在工作中，在看到一段SQL语句很长，执行的效率比较慢，每个表都有好几百万数据，单查一个表差不多3秒左右，两个表union跑了将近20秒，需要进行优化。</p>
-<p>原先的SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> a.bondUniCode,a.bondShortName,<span class="keyword">SUM</span>(a.ofrPrice)<span class="keyword">AS</span> ofrPrice,<span class="keyword">SUM</span>(a.ofrVol)<span class="keyword">AS</span> ofrVol,<span class="keyword">SUM</span>(a.bidPrice)<span class="keyword">AS</span> bidPrice,<span class="keyword">SUM</span>(a.bidVol)<span class="keyword">AS</span> bidVol,a.sendTime </div><div class="line"><span class="keyword">FROM</span> ( </div><div class="line">	<span class="keyword">SELECT</span></div><div class="line">		t.bond_uni_code <span class="keyword">AS</span> bondUniCode, </div><div class="line">		t.bond_short_name <span class="keyword">AS</span> bondShortName, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="number">0</span> <span class="keyword">ELSE</span> <span class="keyword">MAX</span>(t.bond_price) <span class="keyword">END</span> <span class="keyword">AS</span> bidPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line">	<span class="keyword">FROM</span> dmdb.t_bond_quote t </div><div class="line">	<span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>)= <span class="string">'2016-04-10'</span></div><div class="line">	<span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code  </div><div class="line">	<span class="keyword">UNION</span> </div><div class="line">	<span class="keyword">SELECT</span> </div><div class="line">		t.bond_uni_code <span class="keyword">AS</span> bondUniCode, </div><div class="line">		t.bond_short_name <span class="keyword">AS</span> bondShortName, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="number">0</span> <span class="keyword">ELSE</span> <span class="keyword">MIN</span>(t.bond_price) <span class="keyword">END</span> <span class="keyword">AS</span> ofrPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidPrice, </div><div class="line">		<span class="number">0</span> <span class="keyword">AS</span> bidVol, </div><div class="line">		<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line">	<span class="keyword">FROM</span> dmdb.t_bond_quote t </div><div class="line">	<span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>)= <span class="string">'2016-04-10'</span></div><div class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code ) a <span class="keyword">GROUP</span> <span class="keyword">BY</span> a.bondUniCode;</div></pre></td></tr></table></figure></p>
-<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>(1)观察这段SQL的逻辑主要是按照条件（查询条件相同，除了side不同外）查询最大和最小的price的值；<br>(2)查询条件中使用了DATE_FORMAT函数；<br>(3)使用了UNION做联合；</p>
-<p>观察分析之后：</p>
-<p><1>2段SQL是否可以写成一个SQL呢？毕竟是差不多的查询条件，或者可以在查询的结果中做min和max的筛选呢；</1></p>
-<p><2>使用explain查看sql,在WHERE中使用DATE_FORMAT的send_time并没有使用到索引，使用该函数会使查询索引失效；</2></p>
-<p><3>如果可以将逻辑合并一个SQL中，UNION就可以不用；</3></p>
-<h2 id="优化后的SQL"><a href="#优化后的SQL" class="headerlink" title="优化后的SQL"></a>优化后的SQL</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> t.bond_uni_code <span class="keyword">AS</span> bondUniCode,t.bond_short_name <span class="keyword">AS</span> bondShortName,</div><div class="line"><span class="keyword">MIN</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">THEN</span> t.bond_price <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span>  <span class="keyword">AND</span> t.side = <span class="number">2</span> <span class="keyword">THEN</span> <span class="number">0</span>  <span class="keyword">END</span>) <span class="keyword">AS</span> ofrPrice,</div><div class="line"><span class="number">0</span> <span class="keyword">AS</span> ofrVol, </div><div class="line"><span class="keyword">MAX</span>(<span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="keyword">NOT</span> <span class="literal">NULL</span> <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">THEN</span> t.bond_price <span class="keyword">WHEN</span> t.bond_price <span class="keyword">IS</span> <span class="literal">NULL</span>  <span class="keyword">AND</span> t.side = <span class="number">1</span> <span class="keyword">THEN</span>  <span class="number">0</span>  <span class="keyword">END</span>) <span class="keyword">AS</span> bidPrice,</div><div class="line"><span class="number">0</span> <span class="keyword">AS</span> bidVol,</div><div class="line"><span class="keyword">CASE</span> <span class="keyword">WHEN</span> t.send_time <span class="keyword">IS</span> <span class="literal">NULL</span> <span class="keyword">THEN</span> <span class="string">''</span> <span class="keyword">ELSE</span> <span class="keyword">DATE_FORMAT</span>(t.send_time, <span class="string">'%Y-%m-%d'</span>) <span class="keyword">END</span> <span class="keyword">AS</span> sendTime </div><div class="line"><span class="keyword">FROM</span> dmdb.t_bond_quote t  </div><div class="line"><span class="keyword">WHERE</span> t.<span class="string">`status`</span> = <span class="number">1</span> <span class="keyword">AND</span> t.bond_uni_code  <span class="number">0</span> <span class="keyword">AND</span> t.price_unit = <span class="number">2</span> <span class="keyword">AND</span> t.send_time  <span class="keyword">BETWEEN</span> <span class="string">'2017-06-10 000000'</span> <span class="keyword">AND</span> <span class="string">'2016-04-10 235959'</span></div><div class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> t.bond_uni_code;</div></pre></td></tr></table></figure>
-<p>优化后的SQL语句在相同的环境下执行效率提高了N倍，而且可以查询到与优化前的SQL的同样的结果。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      一段SQL的优化
-    
-    </summary>
-    
-      <category term="MySQL" scheme="https://stefanma.github.io/categories/mysql/"/>
-    
-    
-      <category term="MySQL" scheme="https://stefanma.github.io/tags/MySQL/"/>
-    
-      <category term="SQL" scheme="https://stefanma.github.io/tags/SQL/"/>
     
   </entry>
   
