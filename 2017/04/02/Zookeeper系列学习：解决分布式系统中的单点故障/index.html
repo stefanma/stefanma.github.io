@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="分布式," />
+  <meta name="keywords" content="Java,ZooKeeper,分布式," />
 
 
 
@@ -86,16 +86,23 @@
 
 
 
-<meta name="description" content="有关分布式系统数据一致性的思考以及方案">
+<meta name="description" content="利用ZooKeeper的特性，在分布式锁服务中，解决分布式系统中的单点故障">
 <meta property="og:type" content="article">
-<meta property="og:title" content="分布式系统数据一致性的思考（一）">
-<meta property="og:url" content="https://stefanma.github.io/2017/04/12/分布式系统数据一致性的思考/index.html">
+<meta property="og:title" content="Zookeeper系列学习：解决分布式系统中的单点故障">
+<meta property="og:url" content="https://stefanma.github.io/2017/04/02/Zookeeper系列学习：解决分布式系统中的单点故障/index.html">
 <meta property="og:site_name" content="Stefan's Room">
-<meta property="og:description" content="有关分布式系统数据一致性的思考以及方案">
-<meta property="og:updated_time" content="2017-05-22T11:34:31.158Z">
+<meta property="og:description" content="利用ZooKeeper的特性，在分布式锁服务中，解决分布式系统中的单点故障">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_apl_1.png">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_apl_2.png">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_apl_3.png">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_apl_4.png">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_apl_5.png">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_apl_6.png">
+<meta property="og:updated_time" content="2017-06-28T10:43:17.212Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="分布式系统数据一致性的思考（一）">
-<meta name="twitter:description" content="有关分布式系统数据一致性的思考以及方案">
+<meta name="twitter:title" content="Zookeeper系列学习：解决分布式系统中的单点故障">
+<meta name="twitter:description" content="利用ZooKeeper的特性，在分布式锁服务中，解决分布式系统中的单点故障">
+<meta name="twitter:image" content="https://stefanma.github.io/img/zookeeper_apl_1.png">
 
 
 
@@ -123,13 +130,13 @@
 
 
 
-  <link rel="canonical" href="https://stefanma.github.io/2017/04/12/分布式系统数据一致性的思考/"/>
+  <link rel="canonical" href="https://stefanma.github.io/2017/04/02/Zookeeper系列学习：解决分布式系统中的单点故障/"/>
 
 
 
 
 
-  <title> 分布式系统数据一致性的思考（一） | Stefan's Room </title>
+  <title> Zookeeper系列学习：解决分布式系统中的单点故障 | Stefan's Room </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -295,7 +302,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2017/04/12/分布式系统数据一致性的思考/">
+  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2017/04/02/Zookeeper系列学习：解决分布式系统中的单点故障/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Stefan Ma">
@@ -319,7 +326,7 @@
             
             
               
-                分布式系统数据一致性的思考（一）
+                Zookeeper系列学习：解决分布式系统中的单点故障
               
             
           </h2>
@@ -334,8 +341,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-12T14:54:26+08:00">
-                2017-04-12
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-04-02T15:54:09+08:00">
+                2017-04-02
               </time>
             
 
@@ -381,7 +388,7 @@
 
           
               <div class="post-description">
-                  有关分布式系统数据一致性的思考以及方案
+                  利用ZooKeeper的特性，在分布式锁服务中，解决分布式系统中的单点故障
               </div>
           
 
@@ -396,25 +403,15 @@
       
 
       
-        <h2 id="CAP理论"><a href="#CAP理论" class="headerlink" title="CAP理论"></a>CAP理论</h2><p>说到分布式系统的设计，我们都或多或少的接触过CAP；CAP代表的是什么呢？</p>
-<blockquote>
-<p><strong>Consistency(一致性)，数据一致更新，所有数据变动都是同步的；所有的节点上的数据时刻保持同步；</strong><br>  <strong>Availability(可用性)，好的响应性能；每个请求都能接受到一个响应，无论响应成功或失败；</strong><br>  <strong>Partition tolerance(分区容错) ，可靠性；系统应该能持续提供服务，即使系统内部有消息丢失（分区）；</strong></p>
-</blockquote>
-<p>CAP理论在互联网界有着广泛的知名度，知识宽泛一点的工程师都会把其作为衡量系统设计的准则。我们非常清楚地理解了CAP：任何分布式系统在可用性、一致性、分区容错性方面，不能兼得，最多只能得其二，因此，任何分布式系统的设计只是在三者中的不同取舍而已。（CAP在国内比价响，在国外的响力完全不如所想，相反还伴随着诸多的争论。）可以肯定的是，CAP并不适合再作为一个适应任何场景的定理，它的正确性更加适合基于原子读写的NoSQL场景。</p>
-<h2 id="高可用框架中数据一致性"><a href="#高可用框架中数据一致性" class="headerlink" title="高可用框架中数据一致性"></a>高可用框架中数据一致性</h2><p>在某些电商的业务场景下，系统一般会有多个独立的服务组成的，比如在一个业务场景下，一个业务操作同时调用了A，B，C服务，需要满足要么同时成功，要么同时失败。A，B，C可能是不同的部门开发的，部署在不同机器上的远程服务。</p>
-<p>对于分布式系统来说，如果不想牺牲一致性，CAP的理论告诉我们要弃用可用性，对于有些场景下是不能接受的。<br>说到数据一致性，先介绍一下数据一致性的理论基础：</p>
-<h3 id="强一致性"><a href="#强一致性" class="headerlink" title="强一致性"></a>强一致性</h3><p>当更新操作完成之后，任何多个后续进程或者线程的访问都会返回最新的更新过的值。当然这种是对用户最友好的，就是用户上一次写什么，下一次就保证能读到什么。根据 CAP 理论，这种实现需要牺牲可用性。强一致性可以理解为在任意时刻，所有节点中的数据是一样的。</p>
-<h3 id="弱一致性"><a href="#弱一致性" class="headerlink" title="弱一致性"></a>弱一致性</h3><p>系统并不保证续进程或者线程的访问都会返回最新的更新过的值。系统在数据写入成功之后，不承诺立即可以读到最新写入的值，也不会具体的承诺多久之后可以读到。</p>
-<h3 id="最终一致性"><a href="#最终一致性" class="headerlink" title="最终一致性"></a>最终一致性</h3><p>弱一致性的特定形式。系统保证在没有后续更新的前提下，系统最终返回上一次更新操作的值。在没有故障发生的前提下，不一致窗口的时间主要受通信延迟，系统负载和复制副本的个数影响。</p>
-<blockquote>
-<p>在系统的实践中，为了保证系统的高可用性，互联网系统大多将强一致性需求转换成最终一致性的需求并通过系统执行幂等性的保证，保证数据的最终一致性。</p>
-</blockquote>
-<h2 id="BASE和方案"><a href="#BASE和方案" class="headerlink" title="BASE和方案"></a>BASE和方案</h2><h3 id="BASE"><a href="#BASE" class="headerlink" title="BASE"></a>BASE</h3><p>BASE是指基本可用（Basically Available）、软状态（Soft State）、最终一致性（Eventual Consistency）。BASE理论是对CAP理论的延伸，核心思想是即使无法做到强一致性（Strong Consistency，CAP的一致性就是强一致性），但应用可以采用适合的方式达到最终一致性（Eventual Consitency）。<br>ACID是传统数据库常用的设计理念，追求强一致性模型。BASE支持的是大型分布式系统，提出通过牺牲强一致性获得高可用性。ACID和BASE代表了两种截然相反的设计哲学；在分布式系统设计的场景中，系统组件对一致性要求是不同的，因此ACID和BASE又会结合使用。</p>
-<h3 id="方案一【消息日志-本地事务】"><a href="#方案一【消息日志-本地事务】" class="headerlink" title="方案一【消息日志+本地事务】"></a>方案一【消息日志+本地事务】</h3><p>为了保证系统数据的最终一致性，可以使用本地事务来操作。<br>首先需要分布式处理的任务通过消息日志的方式来异步执行。消息日志可以存储到本地文本、数据库或消息队列，再通过业务规则或人工发起重试。人工重试更多的是应用于支付场景，通过对账系统对事后问题的处理。<br>消息日志的方案核心是保证服务接口的幂等性。考虑到网络通讯失败、数据丢包等原因，如果接口不能保证幂等性，数据的唯一性将很难保证。<br>其中一个经典的解决方法，来达到多次重试的幂等性。最常见的场景，如果产生一笔交易，需要在交易表中增加记录，同时还要修改用户表的金额，将主要的修改操作和更新用户表的消息放在一个本地事务来完成；为了避免重复消费用户表的消息带来的问题，达到多次重试的幂等性，增加一个更新记录表来记录已经处理过的消息。<br>基于以上的方法，在第一阶段，通过本地的数据库的事务保障，增加事务表以及消息队列。<br>在第二阶段，分别读出消息队列，通过判断更新记录表来检测相关的记录是否被执行，未被执行的记录会修改用户表然后增加一条操作记录到更新记录表，事务执行成功之后再删除队列。</p>
-<h3 id="方案二【分布式事务】"><a href="#方案二【分布式事务】" class="headerlink" title="方案二【分布式事务】"></a>方案二【分布式事务】</h3><p>目前很多的电商系统随着业务规模的扩大，将原来的一个单体应用拆分成多个不同职责的子系统。最开始的单体应用所有的功能都在一起，存储也在一起，可以在一个事务中，有关系数据库来保证一致性。<br>但是拆分之后就不同了，不同的子系统都有自己的存储，通过接口、RPC等方式来调用不同的子系统的服务，而不是直接操作数据库。这就涉及到一个[分布式事务]的问题。<br>对于分布式事务的解决方案，一般有2种。<br>(1)优先使用异步消息<br>在使用异步消息的时候消费者端要实现幂等。<br>实现幂等的方式有2种，一种是业务逻辑保证幂等。比如接到支付成功的消息订单状态要变成支付完成，如果当前状态是支付完成，则再收到一个支付成功的消息说明消息重复了，直接作为消息成功处理。另一种方式是如果业务逻辑无法保证幂等，则要增加一个去重表或是类似的实现。对于消息生产者端在业务数据库的同实例中放一个消息库，发消息和业务操作在同一个本地事务中。发消息的时候并不立即发出，而是向消息库中插入一条消息记录，然后在事务提交的时候再异步将消息发出，发送成功则将消息库中消息删除，如果遇到消息队列服务异常或者网络异常，消息没有成功发出消息还留在库里，会有另一个服务不断的将这些消息扫出重新发送。</p>
-<p>(2)每个业务库使用一个事务记录库<br>有的业务不适合使用异步消息的方式，事务的各个参与方都需要同步的得到结果。采取在每个参与方的本地业务库中的同实例中放一个事务记录库。<br>比如A同步调用B，C。A本地事务成功的时候更新本地事务记录状态，B和C同样。如果有一次A调用B失败了，有可能是B真的失败了，也有可能是调用超时，实际上B成功了。则由一个中心服务对比三方的事务记录表，做一个最终的决定。假设在三方的事务表中，有的成功，有的失败。</p>
-<p><1>重试B，只到B成功，事务表里记录了各项调用参数等信息；</1></p>
-<p><2>执行A和B的补偿操作（一种可行补偿方式就是回滚）<br>那么会有人觉得在业务库中的同实例中存放消息库或是事务记录库，会对业务侵入，业务还需要关心这个，是否是一个合理的设计？<br>实际上可以依靠运维手段来简化开发的侵入，可以采用的方法是通过DBA在MySQL实例上预初始化这个库，通过框架层（消息的客户端或事务RPC框架）透明的在背后操作这个库，业务开发人员只需要关心自己的业务逻辑，不需要访问这个库。<br>总结起来，两种方式的原理是类似的，也就是将分布式事务转换成多个本地事务，然后依靠重试等方式达到最终一致性。</2></p>
+        <h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><p>现在很多时候我们的服务需要7*24小时工作，假如一台机器挂了，我们希望能有其它机器顶替它继续工作。此类问题现在多采用master-salve模式，也就是常说的主从模式，正常情况下主机提供服务，备机负责监听主机状态，当主机异常时，可以自动切换到备机继续提供服务，这个切换过程中选出下一个主机的过程就是master选举。</p>
+<p>传统的解决方式是采用一个备用节点，这个备用节点定期给当前主节点发送ping包，主节点收到ping包后会向备用节点发送应答ack，当备用节点收到应答，就认为主节点还活着，让它继续提供服务，否则就认为主节点挂掉了，自己将开始行使主节点职责。<br><img src="/img/zookeeper_apl_1.png" alt="示意图"></p>
+<p>当主节点挂了，这时候备用节点收不到回复了，然后他就认为主节点挂了接替他成为主节点。<br><img src="/img/zookeeper_apl_2.png" alt="示意图"></p>
+<p>但是这种方式就是有一个隐患，就是网络问题。主节点的并没有挂，只是在回复的时候网络发生故障，这样我们的备用节点同样收不到回复，就会认为主节点挂了，然后备用节点将他的Master实例启动起来，这样我们的分布式系统当中就有了两个主节点也就是—双Master，出现Master以后我们的从节点就会将它所做的事一部分汇报给了主节点，一部分汇报给了从节点，这样服务就全乱了。<br><img src="/img/zookeeper_apl_3.png" alt="示意图"></p>
+<h2 id="使用ZooKeeper"><a href="#使用ZooKeeper" class="headerlink" title="使用ZooKeeper"></a>使用ZooKeeper</h2><p>ZooKeeper 能够很容易的实现集群管理的功能，如有多台 Server 组成一个服务集群，那么必须要一个“总管”知道当前集群中每台机器的服务状态，一旦有机器不能提供服务，集群中其它集群必须知道，从而做出调整重新分配服务策略。同样当增加集群的服务能力时，就会增加一台或多台 Server，同样也必须让“总管”知道。Zookeeper不仅能够维护当前的集群中机器的服务状态，而且能够选出一个“总管”，让这个总管来管理集群。</p>
+<h3 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h3><p>实现方式都是在ZooKeeper上创建一个 EPHEMERAL 类型的目录节点，然后每个Server在它们创建目录节点的父目录节点上调用 getChildren(String path, boolean watch) 方法并设置 watch为true，由于是 EPHEMERAL 目录节点，当创建它的Server死去，这个目录节点也随之被删除，所以Children将会变化，这时 getChildren上的Watch将会被调用，所以其它 Server就知道已经有某台Server死去了。新增 Server 也是同样的原理。<br>和前面的一样每台Server创建一个EPHEMERAL目录节点，不同的是它还是一个SEQUENTIAL目录节点，所以它是个EPHEMERAL_SEQUENTIAL目录节点。之所以它是EPHEMERAL_SEQUENTIAL目录节点，是因为我们可以给每台Server编号，我们可以选择当前是最小编号的Server为Master，假如这个最小编号的Server死去，由于是EPHEMERAL节点，死去的Server 对应的节点也被删除，所以当前的节点列表中又出现一个最小编号的节点，我们就选择这个节点为当前Master。这样就实现了动态选择Master，避免了传统意义上单Master 容易出现单点故障的问题。</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>1.启动<br>引入了Zookeeper以后我们启动了两个主节点，”主节点-A”和”主节点-B”他们启动以后，都向ZooKeeper去注册一个节点。假设”主节点-A”锁注册地节点是”master-00001”，”主节点-B”注册的节点是”master-00002”，注册完以后进行选举，编号最小的节点将在选举中获胜获得锁成为主节点，也就是我们的”主节点-A”将会获得锁成为主节点，然后”主节点-B”将被阻塞成为一个备用节点。那么，通过这种方式就完成了对两个Master进程的调度。<br><img src="/img/zookeeper_apl_4.png" alt="示意图"></p>
+<p>2.故障处理<br>如果”主节点-A”挂了，这时候他所注册的节点将被自动删除，ZooKeeper会自动感知节点的变化，然后再次发出选举，这时候”主节点-B”将在选举中获胜，替代”主节点-A”成为主节点。<br><img src="/img/zookeeper_apl_5.png" alt="示意图"></p>
+<p>3.恢复<br>如果主节点恢复了，他会再次向ZooKeeper注册一个节点，这时候他注册的节点将会是”master-00003”，ZooKeeper会感知节点的变化再次发动选举，这时候”主节点-B”在选举中会再次获胜继续担任”主节点”，”主节点-A”会担任备用节点。<br><img src="/img/zookeeper_apl_6.png" alt="示意图"></p>
 
       
     </div>
@@ -438,6 +435,10 @@
       
         <div class="post-tags">
           
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/ZooKeeper/" rel="tag"># ZooKeeper</a>
+          
             <a href="/tags/分布式/" rel="tag"># 分布式</a>
           
         </div>
@@ -447,8 +448,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/04/02/Zookeeper系列学习：解决分布式系统中的单点故障/" rel="next" title="Zookeeper系列学习：解决分布式系统中的单点故障">
-                <i class="fa fa-chevron-left"></i> Zookeeper系列学习：解决分布式系统中的单点故障
+              <a href="/2017/03/06/Zookeeper系列学习：数据模型和特点/" rel="next" title="Zookeeper系列学习：数据模型和特点">
+                <i class="fa fa-chevron-left"></i> Zookeeper系列学习：数据模型和特点
               </a>
             
           </div>
@@ -457,8 +458,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2017/05/26/Linux查看系统资源占用的总结/" rel="prev" title="Linux查看系统资源占用的总结">
-                Linux查看系统资源占用的总结 <i class="fa fa-chevron-right"></i>
+              <a href="/2017/04/12/分布式系统数据一致性的思考/" rel="prev" title="分布式系统数据一致性的思考（一）">
+                分布式系统数据一致性的思考（一） <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -600,7 +601,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#CAP理论"><span class="nav-number">1.</span> <span class="nav-text">CAP理论</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#高可用框架中数据一致性"><span class="nav-number">2.</span> <span class="nav-text">高可用框架中数据一致性</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#强一致性"><span class="nav-number">2.1.</span> <span class="nav-text">强一致性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#弱一致性"><span class="nav-number">2.2.</span> <span class="nav-text">弱一致性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最终一致性"><span class="nav-number">2.3.</span> <span class="nav-text">最终一致性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BASE和方案"><span class="nav-number">3.</span> <span class="nav-text">BASE和方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#BASE"><span class="nav-number">3.1.</span> <span class="nav-text">BASE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方案一【消息日志-本地事务】"><span class="nav-number">3.2.</span> <span class="nav-text">方案一【消息日志+本地事务】</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方案二【分布式事务】"><span class="nav-number">3.3.</span> <span class="nav-text">方案二【分布式事务】</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用场景"><span class="nav-number">1.</span> <span class="nav-text">使用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用ZooKeeper"><span class="nav-number">2.</span> <span class="nav-text">使用ZooKeeper</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现方式"><span class="nav-number">2.1.</span> <span class="nav-text">实现方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决方案"><span class="nav-number">3.</span> <span class="nav-text">解决方案</span></a></li></ol></div>
             
 
           </div>

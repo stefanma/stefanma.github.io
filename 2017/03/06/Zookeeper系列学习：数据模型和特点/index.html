@@ -95,7 +95,8 @@
 <meta property="og:image" content="https://stefanma.github.io/img/zookeeper_1.png">
 <meta property="og:image" content="https://stefanma.github.io/img/zookeeper_2.png">
 <meta property="og:image" content="https://stefanma.github.io/img/zookeeper_2.png">
-<meta property="og:updated_time" content="2017-06-26T11:15:42.805Z">
+<meta property="og:image" content="https://stefanma.github.io/img/zookeeper_3.png">
+<meta property="og:updated_time" content="2017-06-28T07:41:14.999Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Zookeeper系列学习：数据模型和特点">
 <meta name="twitter:description" content="ZooKeeper的数据模型和特性">
@@ -404,14 +405,21 @@
 <p>ZooKeeper的数据模型，在结构上和标准文件系统的非常相似，都是采用树形层次结构，ZooKeeper树中的每个节点被称为—Znode。和文件系统的目录树一样，ZooKeeper目录树中每一个节点对应一个Znode，ZooKeeper树中的每个节点可以拥有子节点。每个Znode上可存储少量数据。用户对Znode具有增、删、改、查等操作（权限允许的情况下）。<br>Znode具有原子性操作，每个Znode的数据将被原子性地读写，读操作会读取与Znode相关的所有数据，写操作会一次性替换所有数据。<br>每个Znode维护着一个属性结构，它包含着版本号(dataVersion)，时间戳(ctime,mtime)等状态信息。ZooKeeper正是使用节点的这些特性来实现它的某些特定功能。每当Znode的数据改变时，他相应的版本号将会增加。每当客户端检索数据时，它将同时检索数据的版本号。并且如果一个客户端执行了某个节点的更新或删除操作，他也必须提供要被操作的数据版本号。如果所提供的数据版本号与实际不匹配，那么这个操作将会失败。</p>
 <p>Znode是客户端访问ZooKeeper的主要实体，它包含以下几个特征：<br>（1）Watches<br>客户端可以在节点上设置watch(我们称之为监视器)。当节点状态发生改变时(数据的增、删、改)将会触发watch所对应的操作。当watch被触发时，ZooKeeper将会向客户端发送且仅发送一条通知，因为watch只能被触发一次。<br>（2）数据访问<br>ZooKeeper中的每个节点存储的数据要被原子性的操作。也就是说读操作将获取与节点相关的所有数据，写操作也将替换掉节点的所有数据。另外，每一个节点都拥有自己的ACL(访问控制列表)，这个列表规定了用户的权限，即限定了特定用户对目标节点可以执行的操作。<br>（3）Znode节点类型<br>ZooKeeper中的节点有两种，分别为临时节点和永久节点。节点的类型在创建时即被确定，并且不能改变。<br>①临时节点：该节点的生命周期依赖于创建它们的会话。一旦会话(Session)结束，临时节点将被自动删除，当然可以也可以手动删除。虽然每个临时的Znode都会绑定到一个客户端会话，但他们对所有的客户端还是可见的。另外，ZooKeeper的临时节点不允许拥有子节点。<br>②永久节点：该节点的生命周期不依赖于会话，并且只有在客户端显示执行删除操作的时候，他们才能被删除。<br>ZooKeeper的永久节点：该节点的生命周期不依赖于会话，并且只有在客户端显示执行删除操作的时候，他们才能被删除。<br>（4）顺序节点（唯一性的保证）<br>当创建Znode的时候，用户可以请求在ZooKeeper的路径结尾添加一个递增的计数。这个计数对于此节点的父节点来说是唯一的，它的格式为”%10d”(10位数字，没有数值的数位用0补充，例如”0000000001”)。当计数值大于2^32-1时，计数器将溢出。<br>org.apache.zookeeper.CreateMode中定义了四种节点类型，分别对应：<br>PERSISTENT：永久节点<br>EPHEMERAL：临时节点<br>PERSISTENT_SEQUENTIAL：永久节点、序列化<br>EPHEMERAL_SEQUENTIAL：临时节点、序列化<br><img src="/img/zookeeper_1.png" alt="示意图"></p>
 <h2 id="ZooKeeper服务中的操作"><a href="#ZooKeeper服务中的操作" class="headerlink" title="ZooKeeper服务中的操作"></a>ZooKeeper服务中的操作</h2><p>在ZooKeeper中有9个基本操作:<br><img src="/img/zookeeper_2.png" alt="示意图"><br>更新ZooKeeper操作是有限制的。delete或setData必须明确要更新的Znode的版本号，我们可以调用exists找到。如果版本号不匹配，更新将会失败。<br>更新ZooKeeper操作是非阻塞式的。因此客户端如果失去了一个更新（由于另一个进程在同时更新这个Znode），他可以在不阻塞其他进程执行的情况下，选择重新尝试或进行其他操作。<br>尽管ZooKeeper可以被看做是一个文件系统，但是处于便利，摒弃了一些文件系统地操作原语。因为文件非常的小并且使整体读写的，所以不需要打开、关闭或是寻地的操作。</p>
-<p>每个Znode由3部分组成:<br>1.stat：此为状态信息, 描述该znode的版本, 权限等信息。<br>2.data：与该znode关联的数据。<br>3.children：该znode下的子节点。</p>
+<p>每个Znode由3部分组成:<br>1.stat：此为状态信息, 描述该Znode的版本, 权限等信息。<br>2.data：与该Znode关联的数据。<br>3.children：该Znode下的子节点。</p>
 <p>Zonde总结<br>（1）Znode中的数据可以有多个版本，在查询该Znode数据时就需要带上版本信息。如：set path version / delete path version<br>（2）Znode可以是临时Znode，由create -e 生成的节点，一旦创建这个Znode的client与server断开连接，该Znode将被自动删除。<br>client和server之间通过heartbeat来确认连接正常，这种状态称之为session，断开连接后session失效。<br>（3）临时Znode不能有子Znode。<br>（4）Znode可以自动编号，由create -s 生成的节点，例如在 create -s /app/node 已存在时，将会生成 /app/node00<em>*</em>001节点。<br>（5）Znode可以被监控，该目录下某些信息的修改，例如节点数据、子节点变化等，可以主动通知监控注册的client。事实上，通过这个特性，可以完成许多重要应用，例如配置管理、信息同步、分布式锁等等。</p>
 <h2 id="ACL对Znode进行访问控制"><a href="#ACL对Znode进行访问控制" class="headerlink" title="ACL对Znode进行访问控制"></a>ACL对Znode进行访问控制</h2><p>ZooKeeper使用ACL来对Znode进行访问控制。ACL的实现和Unix文件访问许可非常相似：它使用许可位来对一个节点的不同操作进行允许或禁止的权限控制。但是，和标准的Unix许可不同的是，Zookeeper对于用户类别的区分，不止局限于所有者(owner)、组 (group)、所有人(world)三个级别。Zookeeper中，数据节点没有“所有者”的概念。访问者利用id标识自己的身份，并获得与之相应的不同的访问权限。</p>
 <p>ZooKeeper的节点有5种操作权限：<br>CREATE、READ、WRITE、DELETE、ADMIN 也就是 增、删、改、查、管理权限，这5种权限简写为crwda(即：每个单词的首字符缩写)。<br><img src="/img/zookeeper_2.png" alt="示意图"></p>
+<p>ACL可以控制访问ZooKeeper的节点，只能应用于特定的Znode上，而不能应用于该Znode的所有孩子节点上。它主要有如下五种权限：<br>CREATE 允许创建Child Nodes<br>READ 允许获取Znode的数据，以及该节点的孩子列表<br>WRITE 可以修改Znode的数据<br>DELETE 可以删除一个孩子节点<br>ADMIN 可以设置权限</p>
 <blockquote>
 <p>注：这5种权限中，delete是指对子节点的删除权限，其它4种权限指对自身节点的操作权限。</p>
 </blockquote>
 <p>更新ZooKeeper操作是有限制的。delete或setData必须明确要更新的Znode的版本号，我们可以调用exists找到。如果版本号不匹配，更新将会失败。<br>更新ZooKeeper操作是非阻塞式的。因此客户端如果失去了一个更新(由于另一个进程在同时更新这个Znode)，他可以在不阻塞其他进程执行的情况下，选择重新尝试或进行其他操作。<br>尽管ZooKeeper可以被看做是一个文件系统，但是处于便利，摒弃了一些文件系统地操作原语。因为文件非常的小并且使整体读写的，所以不需要打开、关闭或是寻地的操作。</p>
+<h2 id="Watches（监视）"><a href="#Watches（监视）" class="headerlink" title="Watches（监视）"></a>Watches（监视）</h2><p>Znode发生变化（Znode本身的增加，删除，修改，以及子Znode的变化）可以通过Watch机制通知到客户端。<br>1.一次性的触发器（one-time trigger）<br>ZooKeeper中的Watch是只能触发一次。也就是说，如果客户端在指定的Znode设置了Watch，如果该Znode数据发生变更，ZooKeeper会发送一个变更通知给客户端，同时触发设置的Watch事件。如果Znode数据又发生了变更，客户端在收到第一次通知后没有重新设置该Znode的Watch，则ZooKeeper就不会发送一个变更通知给客户端。Watch机制规定了它是一个一次性的触发器。<br>当设置监视的数据发生改变时，该监视事件会被发送到客户端，例如，如果客户端调用了 getData(“/znode1”, true) 并且稍后 /znode1 节点上的数据发生了改变或者被删除了，客户端将会获取到 /znode1 发生变化的监视事件，而如果 /znode1 再一次发生了变化，除非客户端再次对 /znode1 设置监视，否则客户端不会收到事件通知。</p>
+<p>2.发送给客户端（Sent to the client）<br>ZooKeeper异步通知设置Watch的客户端。但是ZooKeeper能够保证在Znode的变更生效之后才会异步地通知客户端，然后客户端才能够看到Znode的数据变更。由于网络延迟，多个客户端可能会在不同的时间看到Znode数据的变更，但是看到变更的顺序是能够保证有序一致的。这就表明不同的客户端收到的Watch的时间可能不同，但是ZooKeeper有保证：当一个客户端在看到Watch事件之前是不会看到结点数据的变化的。</p>
+<p>Zookeeper 客户端和服务端是通过Socket进行通信的，由于网络存在故障，所以监视事件很有可能不会成功地到达客户端，监视事件是异步发送至监视者的，Zookeeper 本身提供了保序性(ordering guarantee)：即客户端只有首先看到了监视事件后，才会感知到它所设置监视的Znode发生了变化网络延迟或者其他因素可能导致不同的客户端在不同的时刻感知某一监视事件，但是不同的客户端所看到的一切具有一致的顺序。</p>
+<p>3.被设置Watch的数据（The data for which the watch was set）<br>Zookeeper 维护了两条监视链表：数据监视和子节点监视(data watches and child watches)，getData()和exists()设置数据监视，getChildren()设置子节点监视。<br>Znode可以设置两类Watch，一个是Data Watches（该Znode的数据变更导致触发Watch事件），另一个是Child Watches（该Znode的孩子节点发生变更导致触发Watch事件）。调用getData()和exists() 方法可以设置Data Watches，调用getChildren()方法可以设置Child Watches。调用setData()方法触发在该Znode的注册的Data Watches。调用create()方法创建一个Znode，将触发该Znode的Data Watches；调用create()方法创建Znode的孩子节点，则触发Znode的Child Watches。调用delete()方法删除Znode，则同时触发Data Watches和Child Watches，如果该被删除的Znode还有父节点，则父节点触发一个Child Watches。</p>
+<h3 id="Watch注册与处触发"><a href="#Watch注册与处触发" class="headerlink" title="Watch注册与处触发"></a>Watch注册与处触发</h3><p><img src="/img/zookeeper_3.png" alt="示意图"><br>1.exists操作上的Watch，在被监视的Znode创建、删除或数据更新时被触发。<br>2.getData操作上的Watch，在被监视的Znode删除或数据更新时被触发。在被创建时不能被触发，因为只有Znode一定存在，getData操作才会成功。<br>3.getChildren操作上的Watch，在被监视的Znode的子节点创建或删除，或是这个Znode自身被删除时被触发。可以通过查看Watch事件类型来区分是Znode，还是他的子节点被删除：NodeDelete表示Znode被删除，NodeDeletedChanged表示子节点被删除。</p>
+<p>Watch由客户端所连接的ZooKeeper服务器在本地维护，因此watch可以非常容易地设置、管理和分派。当客户端连接到一个新的服务器时，任何的会话事件都将可能触发Watch。另外，当从服务器断开连接的时候，Watch将不会被接收。但是，当一个客户端重新建立连接的时候，任何先前 注册过的watch都会被重新注册。</p>
 
       
     </div>
@@ -458,8 +466,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2017/04/12/分布式系统数据一致性的思考/" rel="prev" title="分布式系统数据一致性的思考（一）">
-                分布式系统数据一致性的思考（一） <i class="fa fa-chevron-right"></i>
+              <a href="/2017/04/02/Zookeeper系列学习：解决分布式系统中的单点故障/" rel="prev" title="Zookeeper系列学习：解决分布式系统中的单点故障">
+                Zookeeper系列学习：解决分布式系统中的单点故障 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -530,7 +538,7 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-count">25</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -601,7 +609,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ZooKeeper数据模型"><span class="nav-number">1.</span> <span class="nav-text">ZooKeeper数据模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZooKeeper服务中的操作"><span class="nav-number">2.</span> <span class="nav-text">ZooKeeper服务中的操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ACL对Znode进行访问控制"><span class="nav-number">3.</span> <span class="nav-text">ACL对Znode进行访问控制</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ZooKeeper数据模型"><span class="nav-number">1.</span> <span class="nav-text">ZooKeeper数据模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZooKeeper服务中的操作"><span class="nav-number">2.</span> <span class="nav-text">ZooKeeper服务中的操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ACL对Znode进行访问控制"><span class="nav-number">3.</span> <span class="nav-text">ACL对Znode进行访问控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Watches（监视）"><span class="nav-number">4.</span> <span class="nav-text">Watches（监视）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Watch注册与处触发"><span class="nav-number">4.1.</span> <span class="nav-text">Watch注册与处触发</span></a></li></ol></li></ol></div>
             
 
           </div>
