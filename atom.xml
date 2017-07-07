@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-06-26T07:03:51.742Z</updated>
+  <updated>2017-07-07T07:36:59.498Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -14,6 +14,164 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Redis的数据淘汰</title>
+    <link href="https://stefanma.github.io/2017/06/03/Redis%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B7%98%E6%B1%B0/"/>
+    <id>https://stefanma.github.io/2017/06/03/Redis的数据淘汰/</id>
+    <published>2017-06-03T03:27:26.000Z</published>
+    <updated>2017-07-07T07:36:59.498Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在Redis中，允许用户设置最大使用内存大小server.maxmemory，在内存限定的情况下是很有用的。例如：在一台8G服务器上部署了4个redis服务点，每一个服务点分配 2G的内存大小，减少内存紧张的情况，由此获取更为稳健的服务。</p>
+<p>当Redis被当做缓存来使用，当你新增数据时，让它自动地回收旧数据是件很方便的事情。LRU是Redis唯一支持的回收方法。Redis的maxmemory指令用于将可用内存限制成一个固定大小，还包括了Redis使用的LRU(Least Recently Used)算法，这个实际上只是近似的LRU。</p>
+<p>Redis中当内存超过限制时，按照配置的策略，淘汰掉相应的键值对数据，使得内存可以继续留有足够的空间保存新的数据。</p>
+<p>redis.conf文件中有对该机制的一份很好的解释:<br><figure class="highlight tex"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"># Don't use more memory than the specified amount of bytes.</div><div class="line"># When the memory limit is reached Redis will try to remove keys</div><div class="line"># according to the eviction policy selected (see maxmemory-policy).</div><div class="line">#</div><div class="line"># If Redis can't remove keys according to the policy, or if the policy is</div><div class="line"># set to 'noeviction', Redis will start to reply with errors to commands</div><div class="line"># that would use more memory, like SET, LPUSH, and so on, and will continue</div><div class="line"># to reply to read-only commands like GET.</div><div class="line">#</div><div class="line"># This option is usually useful when using Redis as an LRU cache, or to set</div><div class="line"># a hard memory limit for an instance (using the 'noeviction' policy).</div><div class="line">#</div><div class="line"># WARNING: If you have slaves attached to an instance with maxmemory on,</div><div class="line"># the size of the output buffers needed to feed the slaves are subtracted</div><div class="line"># from the used memory count, so that network problems / resyncs will</div><div class="line"># not trigger a loop where keys are evicted, and in turn the output</div><div class="line"># buffer of slaves is full with DELs of keys evicted triggering the deletion</div><div class="line"># of more keys, and so forth until the database is completely emptied.</div><div class="line">#</div><div class="line"># In short... if you have slaves attached it is suggested that you set a lower</div><div class="line"># limit for maxmemory so that there is some free RAM on the system for slave</div><div class="line"># output buffers (but this is not needed if the policy is 'noeviction').</div><div class="line">#</div><div class="line"># maxmemory &lt;bytes&gt;</div></pre></td></tr></table></figure></p>
+<h2 id="回收策略"><a href="#回收策略" class="headerlink" title="回收策略"></a>回收策略</h2><p>Redis内存数据集大小上升到一定大小的时候，就会施行数据淘汰策略。maxmemory限制达到的时候Redis会使用的行为由 Redis的maxmemory-policy配置指令来进行配置。<br><img src="/img/redis_lru_1.png" alt="示意图"><br>Redis提供6种数据淘汰策略：<br>(1)volatile-lru：从已设置过期时间的数据集（server.db[i].expires）中挑选最近最少使用的数据淘汰;<br>(2)volatile-ttl：从已设置过期时间的数据集（server.db[i].expires）中挑选将要过期的数据淘汰;<br>(3)volatile-random：从已设置过期时间的数据集（server.db[i].expires）中任意选择数据淘汰;<br>(4)allkeys-lru：从数据集（server.db[i].dict）中挑选最近最少使用的数据淘汰;<br>(5)allkeys-random：从数据集（server.db[i].dict）中任意选择数据淘汰;<br>(6)noeviction（驱逐）：禁止驱逐数据;</p>
+<p>选择正确的回收策略是非常重要的，取决于应用的访问模式，不过你可以在运行时进行相关的策略调整，并且监控缓存命中率和没命中的次数，通过RedisINFO命令输出以便调优。<br>一般的经验规则:<br>使用allkeys-lru策略：当你希望你的请求符合一个幂定律分布，也就是说，你希望部分的子集元素将比其它其它元素被访问的更多。如果你不确定选择什么，这是个很好的选择。.<br>使用allkeys-random：如果你是循环访问，所有的键被连续的扫描，或者你希望请求分布正常（所有元素被访问的概率都差不多）。<br>使用volatile-ttl：如果你想要通过创建缓存对象时设置TTL值，来决定哪些对象应该被过期。<br>allkeys-lru 和 volatile-random策略对于当你想要单一的实例实现缓存及持久化一些键时很有用。不过一般运行两个实例是解决这个问题的更好方法。<br>为了键设置过期时间也是需要消耗内存的，所以使用allkeys-lru这种策略更加高效，因为没有必要为键取设置过期时间当内存有压力时。</p>
+<h2 id="如何工作"><a href="#如何工作" class="headerlink" title="如何工作"></a>如何工作</h2><p>回收进程如何工作的:<br>1.一个客户端运行了新的命令，添加了新的数据。<br>2.Redis检查内存使用情况，如果大于maxmemory的限制, 则根据设定好的策略进行回收。<br>3.一个新的命令被执行，等等。<br>所以我们不断地穿越内存限制的边界，通过不断达到边界然后不断地回收回到边界以下。<br>如果一个命令的结果导致大量内存被使用（例如很大的集合的交集保存到一个新的键），不用多久内存限制就会被这个内存使用量超越。</p>
+<h2 id="数据淘汰机制"><a href="#数据淘汰机制" class="headerlink" title="数据淘汰机制"></a>数据淘汰机制</h2><h3 id="LRU数据淘汰机制"><a href="#LRU数据淘汰机制" class="headerlink" title="LRU数据淘汰机制"></a>LRU数据淘汰机制</h3><p>在服务器配置中保存了lru计数器 server.lrulock，会定时（redis 定时程序serverCorn()）更新，server.lrulock 的值是根据server.unixtime计算出来。<br>另外，从struct redisObject中可以发现，每一个redis对象都会设置相应的lru。可以想象的是，每一次访问数据的时候，会更新 redisObject.lru。<br>LRU数据淘汰机制：在数据集中随机挑选几个键值对，取出其中lru最大的键值对淘汰。所以redis并不是保证取得所有数据集中最近最少使用（LRU）的键值对，而只是随机挑选的几个键值对中的。</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">// redisServer 保存了 lru 计数器</div><div class="line">struct redisServer &#123;</div><div class="line">    ...</div><div class="line">    unsigned lruclock:22;       /* Clock incrementing every minute, for LRU */</div><div class="line">    ...</div><div class="line">&#125;;</div><div class="line"></div><div class="line">// 每一个 redis 对象都保存了 lru</div><div class="line">#define REDIS_LRU_CLOCK_MAX ((1&lt;&lt;21)-1) /* Max value of obj-&gt;lru */</div><div class="line">#define REDIS_LRU_CLOCK_RESOLUTION 10 /* LRU clock resolution in seconds */</div><div class="line">typedef struct redisObject &#123;</div><div class="line">    // 刚刚好 32 bits</div><div class="line"></div><div class="line">    // 对象的类型，字符串/列表/集合/哈希表</div><div class="line">    unsigned type:4;</div><div class="line">    // 未使用的两个位</div><div class="line">    unsigned notused:2;     /* Not used */</div><div class="line">    // 编码的方式，redis 为了节省空间，提供多种方式来保存一个数据</div><div class="line">    // 譬如：“123456789” 会被存储为整数 123456789</div><div class="line">    unsigned encoding:4;</div><div class="line">    unsigned lru:22;        /* lru time (relative to server.lruclock) */</div><div class="line">    // 引用数</div><div class="line">    int refcount;</div><div class="line"></div><div class="line">    // 数据指针</div><div class="line">    void *ptr;</div><div class="line">&#125; robj;</div><div class="line"></div><div class="line">// redis 定时执行程序。联想：linux cron</div><div class="line">int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) &#123;</div><div class="line">    ......</div><div class="line">    /* We have just 22 bits per object for LRU information.</div><div class="line">     * So we use an (eventually wrapping) LRU clock with 10 seconds resolution.</div><div class="line">     * 2^22 bits with 10 seconds resolution is more or less 1.5 years.</div><div class="line">     *</div><div class="line">     * Note that even if this will wrap after 1.5 years it's not a problem,</div><div class="line">     * everything will still work but just some object will appear younger</div><div class="line">     * to Redis. But for this to happen a given object should never be touched</div><div class="line">     * for 1.5 years.</div><div class="line">     *</div><div class="line">     * Note that you can change the resolution altering the</div><div class="line">     * REDIS_LRU_CLOCK_RESOLUTION define.</div><div class="line">     */</div><div class="line">    updateLRUClock();</div><div class="line">    ......</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 更新服务器的 lru 计数器</div><div class="line">void updateLRUClock(void) &#123;</div><div class="line">    server.lruclock = (server.unixtime/REDIS_LRU_CLOCK_RESOLUTION) &amp;</div><div class="line">                                                REDIS_LRU_CLOCK_MAX;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="TTL数据淘汰机制"><a href="#TTL数据淘汰机制" class="headerlink" title="TTL数据淘汰机制"></a>TTL数据淘汰机制</h3><p>Redis数据集数据结构中保存了键值对过期时间的表，即redisDb.expires。和LRU数据淘汰机制类似。<br>TTL数据淘汰机制：从过期时间的表中随机挑选几个键值对，取出其中ttl最大的键值对淘汰。同样，redis并不是保证取得所有过期时间的表中最快过期的键值对，而只是随机挑选的几个键值对中的。</p>
+<p>另外，redis每服务客户端执行一个命令的时候，会检测使用的内存是否超额。如果超额，即进行数据淘汰。<br>相关Redis代码：<br><figure class="highlight tex"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div><div class="line">205</div><div class="line">206</div><div class="line">207</div></pre></td><td class="code"><pre><div class="line">// 执行命令</div><div class="line">int processCommand(redisClient *c) &#123;</div><div class="line">    ......</div><div class="line">    // 内存超额</div><div class="line">    /* Handle the maxmemory directive.</div><div class="line">     *</div><div class="line">     * First we try to free some memory if possible (if there are volatile</div><div class="line">     * keys in the dataset). If there are not the only thing we can do</div><div class="line">     * is returning an error. */</div><div class="line">    if (server.maxmemory) &#123;</div><div class="line">        int retval = freeMemoryIfNeeded();</div><div class="line">        if ((c-&gt;cmd-&gt;flags &amp; REDIS_CMD_DENYOOM) &amp;&amp; retval == REDIS_ERR) &#123;</div><div class="line">            flagTransaction(c);</div><div class="line">            addReply(c, shared.oomerr);</div><div class="line">            return REDIS_OK;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    ......</div><div class="line">&#125;</div><div class="line"></div><div class="line">// 如果需要，是否一些内存</div><div class="line">int freeMemoryIfNeeded(void) &#123;</div><div class="line">    size_t mem_used, mem_tofree, mem_freed;</div><div class="line">    int slaves = listLength(server.slaves);</div><div class="line"></div><div class="line">    // redis 从机回复空间和 AOF 内存大小不计算入 redis 内存大小</div><div class="line">    /* Remove the size of slaves output buffers and AOF buffer from the</div><div class="line">     * count of used memory. */</div><div class="line">    mem_used = zmalloc_used_memory();</div><div class="line"></div><div class="line">    // 从机回复空间大小</div><div class="line">    if (slaves) &#123;</div><div class="line">        listIter li;</div><div class="line">        listNode *ln;</div><div class="line"></div><div class="line">        listRewind(server.slaves,&amp;li);</div><div class="line">        while((ln = listNext(&amp;li))) &#123;</div><div class="line">            redisClient *slave = listNodeValue(ln);</div><div class="line">            unsigned long obuf_bytes = getClientOutputBufferMemoryUsage(slave);</div><div class="line">            if (obuf_bytes &gt; mem_used)</div><div class="line">                mem_used = 0;</div><div class="line">            else</div><div class="line">                mem_used -= obuf_bytes;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    // server.aof_buf &amp;&amp; server.aof_rewrite_buf_blocks</div><div class="line">    if (server.aof_state != REDIS_AOF_OFF) &#123;</div><div class="line">        mem_used -= sdslen(server.aof_buf);</div><div class="line">        mem_used -= aofRewriteBufferSize();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    // 内存是否超过设置大小</div><div class="line">    /* Check if we are over the memory limit. */</div><div class="line">    if (mem_used &lt;= server.maxmemory) return REDIS_OK;</div><div class="line"></div><div class="line">    // redis 中可以设置内存超额策略</div><div class="line">    if (server.maxmemory_policy == REDIS_MAXMEMORY_NO_EVICTION)</div><div class="line">        return REDIS_ERR; /* We need to free memory, but policy forbids. */</div><div class="line"></div><div class="line">    /* Compute how much memory we need to free. */</div><div class="line">    mem_tofree = mem_used - server.maxmemory;</div><div class="line">    mem_freed = 0;</div><div class="line">    while (mem_freed &lt; mem_tofree) &#123;</div><div class="line">        int j, k, keys_freed = 0;</div><div class="line"></div><div class="line">        // 遍历所有数据集</div><div class="line">        for (j = 0; j &lt; server.dbnum; j++) &#123;</div><div class="line">            long bestval = 0; /* just to prevent warning */</div><div class="line">            sds bestkey = NULL;</div><div class="line">            struct dictEntry *de;</div><div class="line">            redisDb *db = server.db+j;</div><div class="line">            dict *dict;</div><div class="line"></div><div class="line">            // 不同的策略，选择的数据集不一样</div><div class="line">            if (server.maxmemory_policy == REDIS_MAXMEMORY_ALLKEYS_LRU ||</div><div class="line">                server.maxmemory_policy == REDIS_MAXMEMORY_ALLKEYS_RANDOM)</div><div class="line">            &#123;</div><div class="line">                dict = server.db[j].dict;</div><div class="line">            &#125; else &#123;</div><div class="line">                dict = server.db[j].expires;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // 数据集为空，继续下一个数据集</div><div class="line">            if (dictSize(dict) == 0) continue;</div><div class="line"></div><div class="line">            // 随机淘汰随机策略：随机挑选</div><div class="line">            /* volatile-random and allkeys-random policy */</div><div class="line">            if (server.maxmemory_policy == REDIS_MAXMEMORY_ALLKEYS_RANDOM ||</div><div class="line">                server.maxmemory_policy == REDIS_MAXMEMORY_VOLATILE_RANDOM)</div><div class="line">            &#123;</div><div class="line">                de = dictGetRandomKey(dict);</div><div class="line">                bestkey = dictGetKey(de);</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // LRU 策略：挑选最近最少使用的数据</div><div class="line">            /* volatile-lru and allkeys-lru policy */</div><div class="line">            else if (server.maxmemory_policy == REDIS_MAXMEMORY_ALLKEYS_LRU ||</div><div class="line">                server.maxmemory_policy == REDIS_MAXMEMORY_VOLATILE_LRU)</div><div class="line">            &#123;</div><div class="line">                // server.maxmemory_samples 为随机挑选键值对次数</div><div class="line">                // 随机挑选 server.maxmemory_samples个键值对，驱逐最近最少使用的数据</div><div class="line">                for (k = 0; k &lt; server.maxmemory_samples; k++) &#123;</div><div class="line">                    sds thiskey;</div><div class="line">                    long thisval;</div><div class="line">                    robj *o;</div><div class="line"></div><div class="line">                    // 随机挑选键值对</div><div class="line">                    de = dictGetRandomKey(dict);</div><div class="line"></div><div class="line">                    // 获取键</div><div class="line">                    thiskey = dictGetKey(de);</div><div class="line"></div><div class="line">                    /* When policy is volatile-lru we need an additional lookup</div><div class="line">                     * to locate the real key, as dict is set to db-&gt;expires. */</div><div class="line">                    if (server.maxmemory_policy == REDIS_MAXMEMORY_VOLATILE_LRU)</div><div class="line">                        de = dictFind(db-&gt;dict, thiskey);</div><div class="line">                    o = dictGetVal(de);</div><div class="line"></div><div class="line">                    // 计算数据的空闲时间</div><div class="line">                    thisval = estimateObjectIdleTime(o);</div><div class="line"></div><div class="line">                    // 当前键值空闲时间更长，则记录</div><div class="line">                    /* Higher idle time is better candidate for deletion */</div><div class="line">                    if (bestkey == NULL || thisval &gt; bestval) &#123;</div><div class="line">                        bestkey = thiskey;</div><div class="line">                        bestval = thisval;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // TTL 策略：挑选将要过期的数据</div><div class="line">            /* volatile-ttl */</div><div class="line">            else if (server.maxmemory_policy == REDIS_MAXMEMORY_VOLATILE_TTL) &#123;</div><div class="line">                // server.maxmemory_samples 为随机挑选键值对次数</div><div class="line">                // 随机挑选 server.maxmemory_samples个键值对，驱逐最快要过期的数据</div><div class="line">                for (k = 0; k &lt; server.maxmemory_samples; k++) &#123;</div><div class="line">                    sds thiskey;</div><div class="line">                    long thisval;</div><div class="line"></div><div class="line">                    de = dictGetRandomKey(dict);</div><div class="line">                    thiskey = dictGetKey(de);</div><div class="line">                    thisval = (long) dictGetVal(de);</div><div class="line"></div><div class="line">                    /* Expire sooner (minor expire unix timestamp) is better</div><div class="line">                     * candidate for deletion */</div><div class="line">                    if (bestkey == NULL || thisval &lt; bestval) &#123;</div><div class="line">                        bestkey = thiskey;</div><div class="line">                        bestval = thisval;</div><div class="line">                    &#125;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line"></div><div class="line">            // 删除选定的键值对</div><div class="line">            /* Finally remove the selected key. */</div><div class="line">            if (bestkey) &#123;</div><div class="line">                long long delta;</div><div class="line"></div><div class="line">                robj *keyobj = createStringObject(bestkey,sdslen(bestkey));</div><div class="line"></div><div class="line">                // 发布数据更新消息，主要是 AOF 持久化和从机</div><div class="line">                propagateExpire(db,keyobj);</div><div class="line"></div><div class="line">                // 注意， propagateExpire() 可能会导致内存的分配， propagateExpire() 提前执行就是因为 redis 只计算 dbDelete() 释放的内存大小。倘若同时计算 dbDelete() 释放的内存和 propagateExpire() 分配空间的大小，与此同时假设分配空间大于释放空间，就有可能永远退不出这个循环。</div><div class="line">                // 下面的代码会同时计算 dbDelete() 释放的内存和 propagateExpire() 分配空间的大小：</div><div class="line">                // propagateExpire(db,keyobj);</div><div class="line">                // delta = (long long) zmalloc_used_memory();</div><div class="line">                // dbDelete(db,keyobj);</div><div class="line">                // delta -= (long long) zmalloc_used_memory();</div><div class="line">                // mem_freed += delta;</div><div class="line">                /////////////////////////////////////////</div><div class="line"></div><div class="line">                /* We compute the amount of memory freed by dbDelete() alone.</div><div class="line">                 * It is possible that actually the memory needed to propagate</div><div class="line">                 * the DEL in AOF and replication link is greater than the one</div><div class="line">                 * we are freeing removing the key, but we can't account for</div><div class="line">                 * that otherwise we would never exit the loop.</div><div class="line">                 *</div><div class="line">                 * AOF and Output buffer memory will be freed eventually so</div><div class="line">                 * we only care about memory used by the key space. */</div><div class="line">                // 只计算 dbDelete() 释放内存的大小</div><div class="line">                delta = (long long) zmalloc_used_memory();</div><div class="line">                dbDelete(db,keyobj);</div><div class="line">                delta -= (long long) zmalloc_used_memory();</div><div class="line">                mem_freed += delta;</div><div class="line"></div><div class="line">                server.stat_evictedkeys++;</div><div class="line"></div><div class="line">                // 将数据的删除通知所有的订阅客户端</div><div class="line">                notifyKeyspaceEvent(REDIS_NOTIFY_EVICTED, "evicted",</div><div class="line">                    keyobj, db-&gt;id);</div><div class="line">                decrRefCount(keyobj);</div><div class="line">                keys_freed++;</div><div class="line"></div><div class="line">                // 将从机回复空间中的数据及时发送给从机</div><div class="line">                /* When the memory to free starts to be big enough, we may</div><div class="line">                 * start spending so much time here that is impossible to</div><div class="line">                 * deliver data to the slaves fast enough, so we force the</div><div class="line">                 * transmission here inside the loop. */</div><div class="line">                if (slaves) flushSlavesOutputBuffers();</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // 未能释放空间，且此时 redis 使用的内存大小依旧超额，失败返回</div><div class="line">        if (!keys_freed) return REDIS_ERR; /* nothing to free... */</div><div class="line">    &#125;</div><div class="line">    return REDIS_OK;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>官方说明地址：<a href="https://redis.io/topics/lru-cache" target="_blank" rel="external">https://redis.io/topics/lru-cache</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      应对某些场景可以将Redis当做LRU缓存来使用
+    
+    </summary>
+    
+      <category term="Redis" scheme="https://stefanma.github.io/categories/Redis/"/>
+    
+    
+      <category term="Redis" scheme="https://stefanma.github.io/tags/Redis/"/>
+    
+      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>可供参考的Spring集成Redis的方式</title>
+    <link href="https://stefanma.github.io/2017/06/02/%E5%8F%AF%E4%BE%9B%E5%8F%82%E8%80%83%E7%9A%84Spring%E9%9B%86%E6%88%90Redis%E7%9A%84%E6%96%B9%E5%BC%8F/"/>
+    <id>https://stefanma.github.io/2017/06/02/可供参考的Spring集成Redis的方式/</id>
+    <published>2017-06-02T04:16:19.000Z</published>
+    <updated>2017-07-06T03:34:35.628Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="单机版"><a href="#单机版" class="headerlink" title="单机版"></a>单机版</h2><p>配置文件<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">&lt;!-- 加载配置属性文件 --&gt;    </div><div class="line">&lt;context:property-placeholder ignore-unresolvable="true" location="classpath:redis.properties" /&gt;     </div><div class="line">    </div><div class="line">&lt;bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig"&gt;    </div><div class="line">    &lt;property name="maxIdle" value="300" /&gt; &lt;!-- 最大能够保持idel状态的对象数 --&gt;     </div><div class="line">    &lt;property name="maxTotal" value="60000" /&gt; &lt;!-- 最大分配的对象数 --&gt;    </div><div class="line">    &lt;property name="testOnBorrow" value="true" /&gt; &lt;!-- 当调用borrow Object方法时，是否进行有效性检查 --&gt;    </div><div class="line">&lt;/bean&gt;    </div><div class="line">    </div><div class="line">&lt;bean id="jedisPool" class="redis.clients.jedis.JedisPool"&gt;    </div><div class="line">    &lt;constructor-arg index="0" ref="jedisPoolConfig" /&gt;    </div><div class="line">    &lt;constructor-arg index="1" value="$&#123;redis.host&#125;" /&gt;    </div><div class="line">    &lt;constructor-arg index="2" value="$&#123;redis.port&#125;" type="int" /&gt;    </div><div class="line">    &lt;constructor-arg index="3" value="$&#123;redis.timeout&#125;"/&gt;    </div><div class="line">    &lt;constructor-arg index="4" value="$&#123;redis.password&#125;"/&gt;    </div><div class="line">&lt;/bean&gt;</div></pre></td></tr></table></figure></p>
+<h2 id="Sentinel哨兵模式"><a href="#Sentinel哨兵模式" class="headerlink" title="Sentinel哨兵模式"></a>Sentinel哨兵模式</h2><p>redis.properties内容<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">##sentinel1的IP和端口  </div><div class="line">redis.sentinel1.host=192.168.1.55  </div><div class="line">redis.sentinel1.port=26379  </div><div class="line">##sentinel2的IP和端口    </div><div class="line">redis.sentinel2.host=192.168.1.56  </div><div class="line">redis.sentinel2.port=26380  </div><div class="line">redis.password=abc@123$321  </div><div class="line">  </div><div class="line">#最大闲置连接数    </div><div class="line">redis.maxIdle=50  </div><div class="line">#最大连接数，超过此连接时操作redis会报错    </div><div class="line">redis.maxTotal=200  </div><div class="line">redis.maxWaitTime=3000   </div><div class="line">redis.testOnBorrow=true  </div><div class="line">#最小闲置连接数，spring启动的时候自动建立该数目的连接供应用程序使用，不够的时候会申请。    </div><div class="line">redis.minIdle=30</div></pre></td></tr></table></figure></p>
+<p>配置文件<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">&lt;context:property-placeholder ignore-unresolvable="true" location="classpath:redis.properties" /&gt;  </div><div class="line">    &lt;bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig"&gt;  </div><div class="line">        &lt;property name="maxTotal" value="$&#123;redis.maxTotal&#125;" /&gt;  </div><div class="line">        &lt;property name="minIdle" value="$&#123;redis.minIdle&#125;" /&gt;  </div><div class="line">        &lt;property name="maxWaitMillis" value="$&#123;redis.maxWaitTime&#125;" /&gt;  </div><div class="line">        &lt;property name="maxIdle" value="$&#123;redis.maxIdle&#125;" /&gt;  </div><div class="line">        &lt;property name="testOnBorrow" value="$&#123;redis.testOnBorrow&#125;" /&gt;  </div><div class="line">        &lt;property name="testOnReturn" value="true" /&gt;  </div><div class="line">        &lt;property name="testWhileIdle" value="true" /&gt;  </div><div class="line">    &lt;/bean&gt;  </div><div class="line">    &lt;bean id="jedisSentinelPool" class="redis.clients.jedis.JedisSentinelPool"&gt;  </div><div class="line">        &lt;constructor-arg index="0" value="mymaster" /&gt;  </div><div class="line">        &lt;constructor-arg index="1"&gt;  </div><div class="line">            &lt;set&gt;  </div><div class="line">                &lt;value&gt;$&#123;redis.sentinel1.host&#125;:$&#123;redis.sentinel1.port&#125;&lt;/value&gt;  </div><div class="line">                &lt;value&gt;$&#123;redis.sentinel2.host&#125;:$&#123;redis.sentinel2.port&#125;&lt;/value&gt;  </div><div class="line">            &lt;/set&gt;  </div><div class="line">        &lt;/constructor-arg&gt;  </div><div class="line">        &lt;constructor-arg index="2" ref="poolConfig" /&gt;   </div><div class="line">        &lt;constructor-arg index="3" value="$&#123;redis.password&#125;" /&gt;  </div><div class="line">    &lt;/bean&gt;</div></pre></td></tr></table></figure></p>
+<h2 id="Redis-Cluster集群模式"><a href="#Redis-Cluster集群模式" class="headerlink" title="Redis Cluster集群模式"></a>Redis Cluster集群模式</h2><p>配置文件<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div></pre></td><td class="code"><pre><div class="line">&lt;!-- Jedis链接池配置，Jedis版本建议升级到最新 --&gt;    </div><div class="line">    &lt;bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig"&gt;    </div><div class="line">        &lt;property name="maxTotal" value="100" /&gt;    </div><div class="line">        &lt;property name="maxIdle" value="20" /&gt;    </div><div class="line">        &lt;property name="minIdle" value="10" /&gt;    </div><div class="line">        &lt;property name="blockWhenExhausted" value="true"&gt;&lt;/property&gt;    </div><div class="line">        &lt;property name="maxWaitMillis" value="3000" /&gt;    </div><div class="line">        &lt;property name="testOnBorrow" value="false" /&gt;    </div><div class="line">        &lt;property name="testOnReturn" value="false" /&gt;    </div><div class="line">        &lt;property name="testWhileIdle" value="true" /&gt;    </div><div class="line">        &lt;property name="minEvictableIdleTimeMillis" value="60000" /&gt;    </div><div class="line">        &lt;property name="timeBetweenEvictionRunsMillis" value="30000" /&gt;    </div><div class="line">        &lt;property name="numTestsPerEvictionRun" value="-1" /&gt;    </div><div class="line">    &lt;/bean&gt;    </div><div class="line">    </div><div class="line">    &lt;!-- JedisCluster --&gt;    </div><div class="line">    &lt;bean id="jedisCluster" class="redis.clients.jedis.JedisCluster"&gt;    </div><div class="line">        &lt;constructor-arg index="0"&gt;    </div><div class="line">            &lt;set&gt;    </div><div class="line">                &lt;bean class="redis.clients.jedis.HostAndPort"&gt;    </div><div class="line">                    &lt;constructor-arg index="0" value="192.168.1.111" /&gt;    </div><div class="line">                    &lt;constructor-arg index="1" value="7111" type="int" /&gt;    </div><div class="line">                &lt;/bean&gt;    </div><div class="line">                &lt;bean class="redis.clients.jedis.HostAndPort"&gt;    </div><div class="line">                    &lt;constructor-arg index="0" value="192.168.1.112" /&gt;    </div><div class="line">                    &lt;constructor-arg index="1" value="7112" type="int" /&gt;    </div><div class="line">                &lt;/bean&gt;    </div><div class="line">                &lt;bean class="redis.clients.jedis.HostAndPort"&gt;    </div><div class="line">                    &lt;constructor-arg index="0" value="192.168.1.113" /&gt;    </div><div class="line">                    &lt;constructor-arg index="1" value="7113" type="int" /&gt;    </div><div class="line">                &lt;/bean&gt;    </div><div class="line">                &lt;bean class="redis.clients.jedis.HostAndPort"&gt;    </div><div class="line">                    &lt;constructor-arg index="0" value="192.168.1.114" /&gt;    </div><div class="line">                    &lt;constructor-arg index="1" value="7114" type="int" /&gt;    </div><div class="line">                &lt;/bean&gt;    </div><div class="line">                &lt;bean class="redis.clients.jedis.HostAndPort"&gt;    </div><div class="line">                    &lt;constructor-arg index="0" value="192.168.1.115" /&gt;    </div><div class="line">                    &lt;constructor-arg index="1" value="7115" type="int" /&gt;    </div><div class="line">                &lt;/bean&gt;    </div><div class="line">                &lt;bean class="redis.clients.jedis.HostAndPort"&gt;    </div><div class="line">                    &lt;constructor-arg index="0" value="192.168.1.116" /&gt;    </div><div class="line">                    &lt;constructor-arg index="1" value="7116" type="int" /&gt;    </div><div class="line">                &lt;/bean&gt;    </div><div class="line">            &lt;/set&gt;    </div><div class="line">        &lt;/constructor-arg&gt;    </div><div class="line">        &lt;constructor-arg index="1" value="2000" type="int"&gt;&lt;/constructor-arg&gt;    </div><div class="line">        &lt;constructor-arg index="2" value="100" type="int"&gt;&lt;/constructor-arg&gt;    </div><div class="line">        &lt;constructor-arg index="3" ref="jedisPoolConfig"&gt;&lt;/constructor-arg&gt;    </div><div class="line">    &lt;/bean&gt;</div></pre></td></tr></table></figure></p>
+<h2 id="Redis-Sharding集群模式"><a href="#Redis-Sharding集群模式" class="headerlink" title="Redis Sharding集群模式"></a>Redis Sharding集群模式</h2><p>配置文件<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">&lt;!-- jedis 连接池配置--&gt;  </div><div class="line">    &lt;bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig"&gt;    </div><div class="line">        &lt;property name="maxActive"     value="$&#123;redis.pool.maxActive&#125;" /&gt;    </div><div class="line">        &lt;property name="maxIdle"       value="$&#123;redis.pool.maxIdle&#125;" /&gt;    </div><div class="line">        &lt;property name="maxWait"       value="$&#123;redis.pool.maxWait&#125;" /&gt;    </div><div class="line">        &lt;property name="testOnBorrow"  value="$&#123;redis.pool.testOnBorrow&#125;" /&gt;    </div><div class="line">    &lt;/bean&gt;    </div><div class="line">      &lt;!-- jedis 多个服务器配置--&gt;  </div><div class="line">      &lt;bean id="jedisShardInfo1" class="redis.clients.jedis.JedisShardInfo"&gt;    </div><div class="line">        &lt;constructor-arg index="0" value="$&#123;redis2.ip&#125;" /&gt;    </div><div class="line">        &lt;constructor-arg index="1" value="$&#123;redis.port&#125;" type="int" /&gt;  </div><div class="line">        &lt;property value="$&#123;redis.password&#125;" name="password"/&gt;       </div><div class="line">      &lt;/bean&gt;   </div><div class="line">    </div><div class="line">      &lt;bean id="jedisShardInfo2" class="redis.clients.jedis.JedisShardInfo"&gt;    </div><div class="line">        &lt;constructor-arg index="0" value="$&#123;redis.ip&#125;" /&gt;    </div><div class="line">        &lt;constructor-arg index="1" value="$&#123;redis.port&#125;" type="int" /&gt;  </div><div class="line">        &lt;property value="$&#123;redis.password&#125;" name="password"/&gt;     </div><div class="line">      &lt;/bean&gt;   </div><div class="line">    </div><div class="line">      &lt;bean id="shardedJedisPool" class="redis.clients.jedis.ShardedJedisPool"&gt;    </div><div class="line">        &lt;constructor-arg index="0" ref="jedisPoolConfig" /&gt;    </div><div class="line">        &lt;constructor-arg index="1"&gt;  </div><div class="line">          &lt;list&gt;  </div><div class="line">            &lt;ref bean="jedisShardInfo1" /&gt;  </div><div class="line">            &lt;ref bean="jedisShardInfo2"/&gt;  </div><div class="line">          &lt;/list&gt;  </div><div class="line">        &lt;/constructor-arg&gt;    </div><div class="line">      &lt;/bean&gt;</div></pre></td></tr></table></figure></p>
+]]></content>
+    
+    <summary type="html">
+    
+      提供一些项目中可能需要用到的可供参考的Spring集成Redis的配置文件方式。
+    
+    </summary>
+    
+      <category term="Redis" scheme="https://stefanma.github.io/categories/Redis/"/>
+    
+    
+      <category term="Redis" scheme="https://stefanma.github.io/tags/Redis/"/>
+    
+      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>低成本高可用Redis集群解决方案设计</title>
+    <link href="https://stefanma.github.io/2017/05/30/%E4%BD%8E%E6%88%90%E6%9C%AC%E9%AB%98%E5%8F%AF%E7%94%A8Redis%E9%9B%86%E7%BE%A4%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1/"/>
+    <id>https://stefanma.github.io/2017/05/30/低成本高可用Redis集群解决方案设计/</id>
+    <published>2017-05-30T07:03:45.000Z</published>
+    <updated>2017-07-06T04:05:19.364Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Redis高可用方案，看到较多的是Keepalived、Zookeeper方案。Keepalived是主备模式，意味着总有一台浪费着，Keepalived方案配置简单、人力成本小，在数据量少、压力小的情况下推荐使用。Zookeeper工作量成本偏高。可以利用Redis提供的特性，构建低成本高可用的Redis集群。</p>
+<h2 id="Redis-Sentinel（哨兵）"><a href="#Redis-Sentinel（哨兵）" class="headerlink" title="Redis Sentinel（哨兵）"></a>Redis Sentinel（哨兵）</h2><p>Sentinel是Redis官方为集群提供的高可用解决方案。在实际项目中可以使用sentinel去做redis自动故障转移，减少人工介入的工作量。另外sentinel也给客户端提供了监控消息的通知，这样客户端就可根据消息类型去判断服务器的状态，去做对应的适配操作。</p>
+<p>Sentinel主要功能列表：</p>
+<ul>
+<li>监控（Monitoring）：Sentinel持续检查集群中的master、slave状态，判断是否存活。</li>
+<li>通知（Notification）：在发现某个redis实例死的情况下，Sentinel能通过API通知系统管理员或其他程序脚本。</li>
+<li>自动故障转移（Automatic failover）：如果一个master挂掉后，sentinel立马启动故障转移，把某个slave提升为master。其他的slave重新配置指向新master，并且应用程序使用Redis服务端通知的新地址。</li>
+<li>配置提供者（Configuration provider）：对于客户端来说sentinel通知是有效可信赖的。客户端会连接sentinel去请求当前master的地址，一旦发生故障sentinel会提供新地址给客户端。</li>
+</ul>
+<p>Redis Sentinel是一个分布式系统：<br>Sentinel（哨兵）自身被设计成和多个哨兵进程一起合作运行。有多个Sentinel（哨兵）进程合作的好处有：<br>1.当多个Sentinel（哨兵）对一个master不再可用达成一致时执行故障检测。这会降低错误判断的概率。<br>2.即使在不是所有的Sentinel（哨兵）都工作时哨兵也会工作，使系统健壮的抵抗故障。毕竟在故障系统里单点故障没有什么意义。<br>Redis的Sentinel（哨兵）、Redis实例(master和slave)、和客户端是一个有特种功能的大型分布式系统。</p>
+<h2 id="高可用性解决方案"><a href="#高可用性解决方案" class="headerlink" title="高可用性解决方案"></a>高可用性解决方案</h2><p>由一个或多个Sentinel实例组成的Sentinel系统可以监视任意多个主服务器，以及所有从服务器，并在被监视的主服务器进入下线状态时，自动将下线主服务器属下的某个从服务器升级为新的主服务器，然后由新的主服务器代替已下线的主服务器继续处理命令请求。<br><img src="/img/redis_HA_1.jpg" alt="示意图"></p>
+<p>示例图：<br><img src="/img/redis_HA_2.jpg" alt="示意图"></p>
+<h3 id="Sentinel配置"><a href="#Sentinel配置" class="headerlink" title="Sentinel配置"></a>Sentinel配置</h3><p>Sentinel本质上只是一个运行在特殊模式下的redis服务器，通过不同配置来区分提供服务。Redis源码中包含了一个名为sentinel.conf的文件，这个文件是一个带有详细注释的Sentinel 配置。</p>
+<p>[监控主服务器名称] [ip] [port] [多少sentinel同意才发生故障转移]</p>
+<blockquote>
+<p>sentinel monitor mymaster 127.0.0.1 6379 2</p>
+</blockquote>
+<p>[监控主服务器名称] [master多少毫秒后不回应ping命令，就认为master是主观下线状态]</p>
+<blockquote>
+<p>sentinel down-after-milliseconds mymaster 6000</p>
+</blockquote>
+<p>[故障转移超时时间]</p>
+<blockquote>
+<p>sentinel failover-timeout mymaster 180000</p>
+</blockquote>
+<p>[在执行故障转移时,最多可以有多少个从服务器同时对新的主服务器进行同步]</p>
+<blockquote>
+<p>sentinel parallel-syncs mymaster 1</p>
+</blockquote>
+<ul>
+<li><p>down-after-milliseconds解释：</p>
+<blockquote>
+<p>当实例超过该时间没有返回PING，或者直接返回错误，那么Sentinel将这个实例标记为主观下线（简称SDOWN），只有一个Sentinel进程将实例标记为主观下线并不一定会引起实例的自动故障迁移；只有在足够数量的Sentinel 都将一个实例标记为主观下线之后，实例才会被标记为客观下线（简称ODOWN），这时自动故障迁移才会执行。只有一个Sentinel进程将实例标记为主观下线并不一定会引起实例的自动故障迁移，只有在足够数量的Sentinel都将一个实例标记为主观下线之后，实例才会被标记为客观下线，这时自动故障迁移才会执行。</p>
+</blockquote>
+</li>
+<li><p>parallel-syncs解释：</p>
+<blockquote>
+<p>在发生故障转移主备切换时，这个选项指定了最多可以有多少个slave同时对新的master进行同步，这个数字越小，完成故障转移所需的时间就越长，但是如果这个数字越大，就意味着越多的slave因为replication而不可用。可以通过将这个值设为1来保证每次只有一个slave处于不能处理命令请求的状态。</p>
+</blockquote>
+</li>
+</ul>
+<p>启动后Sentinel会：<br>1.以10秒一次的频率，向被监视的master发送info命令，根据回复获取master当前信息。<br>2.以1秒一次的频率，向所有redis服务器、包含sentinel在内发送PING命令，通过回复判断服务器是否在线。<br>3.以2秒一次的频率，通过向所有被监视的master，slave服务器发送包含当前sentinel，master信息的消息。<br>另外建议sentinel至少起3个实例以上，并配置2个实例同意即可发生转移。 5个实例，配置3个实例同意以此类推。</p>
+<h3 id="故障转移消息接收的3种方式"><a href="#故障转移消息接收的3种方式" class="headerlink" title="故障转移消息接收的3种方式"></a>故障转移消息接收的3种方式</h3><p>Redis服务器一旦发送故障后，sentinel通过raft算法投票选举新master。故障转移过程可以通过sentinel的API获取/订阅接收事件消息。</p>
+<h4 id="脚本接收"><a href="#脚本接收" class="headerlink" title="脚本接收"></a>脚本接收</h4><p>当故障转移期间，可以指定一个“通知”脚本用来告知系统管理员，当前集群的情况。<br>脚本被允许执行的最大时间为60秒，如果超时，脚本将会被终止(KILL)。</p>
+<blockquote>
+<p>sentinel notification-script mymaster /var/redis/notify.sh </p>
+</blockquote>
+<p>故障转移期之后，配置通知客户端的脚本。</p>
+<blockquote>
+<p>sentinel client-reconfig-script mymaster /var/redis/notifyReconfig.sh </p>
+</blockquote>
+<h4 id="客户端接收"><a href="#客户端接收" class="headerlink" title="客户端接收"></a>客户端接收</h4><p>Sentinel的故障转移消息通知使用的是redis发布订阅。就是说在故障转移期间所有产生的事件信息，都通过频道(channel)发布出去。比如我们加台slave服务器，sentinel监听到后会发布加slave的消息到”+slave”频道上，客户端只需要订阅”+slave”频道即可接收到对应消息。</p>
+<p>其消息格式如下：<br>[实例类型] [事件服务器名称] [服务器ip] [服务器端口] @[master名称] [ip] [端口]</p>
+<p><instance-type> <name> <ip> <port> @ <master-name> <master-ip> <master-port></master-port></master-ip></master-name></port></ip></name></instance-type></p>
+<p>通知消息格式示例：</p>
+<blockquote>
+<ul>
+<li>//订阅类型， *即订阅所有事件消息。<br>-sdown     //消息类型<br>slave 127.0.0.1:6379 127.0.0.1 6379 @ mymaster 127.0.0.1 6381</li>
+</ul>
+</blockquote>
+<h4 id="服务间接接收"><a href="#服务间接接收" class="headerlink" title="服务间接接收"></a>服务间接接收</h4><p>这种方式在第二种基础上扩展了一层，即应用端不直接订阅sentinel。 单独做服务去干这件事情，然后应用端提供API供这个服务回调通知。<br>这样做的好处：</p>
+<ul>
+<li>减少应用端监听失败出错的可能性。</li>
+<li>应用端由主动方变成被动方，降低耦合。</li>
+<li>性能提高，轮询变回调。</li>
+<li>独立成服务可扩展性更高</li>
+</ul>
+<p>（1）以后换掉sentinel，我们只需要动服务即可，应用端无需更改。<br>（2）可以在服务内多增加一层守护线程去主动拉取redis状态，这样可确保即使sentinel不生效，也能及时察觉redis状态，并通知到应用端。当然这种情况很极端，因为sentinel配的也是多节点，同时挂的几率非常小。</p>
+<p>Redis官网sentinel配置介绍：<a href="https://redis.io/topics/sentinel" target="_blank" rel="external">https://redis.io/topics/sentinel</a></p>
+]]></content>
+    
+    <summary type="html">
+    
+      利用Redis提供的特性，构建低成本高可用的Redis集群。建议使用Redis 3.0及以上稳定版本。
+    
+    </summary>
+    
+      <category term="Redis" scheme="https://stefanma.github.io/categories/Redis/"/>
+    
+    
+      <category term="Redis" scheme="https://stefanma.github.io/tags/Redis/"/>
+    
+      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+  </entry>
   
   <entry>
     <title>Linux查看系统资源占用的总结</title>
@@ -93,7 +251,7 @@
     <link href="https://stefanma.github.io/2017/04/02/Zookeeper%E7%B3%BB%E5%88%97%E5%AD%A6%E4%B9%A0%EF%BC%9A%E8%A7%A3%E5%86%B3%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E5%8D%95%E7%82%B9%E6%95%85%E9%9A%9C/"/>
     <id>https://stefanma.github.io/2017/04/02/Zookeeper系列学习：解决分布式系统中的单点故障/</id>
     <published>2017-04-02T07:54:09.000Z</published>
-    <updated>2017-06-28T10:43:17.212Z</updated>
+    <updated>2017-06-28T10:43:37.132Z</updated>
     
     <content type="html"><![CDATA[<h2 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h2><p>现在很多时候我们的服务需要7*24小时工作，假如一台机器挂了，我们希望能有其它机器顶替它继续工作。此类问题现在多采用master-salve模式，也就是常说的主从模式，正常情况下主机提供服务，备机负责监听主机状态，当主机异常时，可以自动切换到备机继续提供服务，这个切换过程中选出下一个主机的过程就是master选举。</p>
 <p>传统的解决方式是采用一个备用节点，这个备用节点定期给当前主节点发送ping包，主节点收到ping包后会向备用节点发送应答ack，当备用节点收到应答，就认为主节点还活着，让它继续提供服务，否则就认为主节点挂掉了，自己将开始行使主节点职责。<br><img src="/img/zookeeper_apl_1.png" alt="示意图"></p>
@@ -117,9 +275,9 @@
     
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
-      <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
     
   </entry>
   
@@ -162,18 +320,18 @@
     
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
-      <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
     
   </entry>
   
   <entry>
-    <title>ZooKeeper系列学习：概述</title>
+    <title>Zookeeper系列学习：概述</title>
     <link href="https://stefanma.github.io/2017/03/05/Zookeeper%E7%B3%BB%E5%88%97%E5%AD%A6%E4%B9%A0%EF%BC%9A%E6%A6%82%E8%BF%B0/"/>
     <id>https://stefanma.github.io/2017/03/05/Zookeeper系列学习：概述/</id>
     <published>2017-03-05T11:52:55.000Z</published>
-    <updated>2017-06-06T11:57:51.857Z</updated>
+    <updated>2017-07-07T07:39:30.594Z</updated>
     
     <content type="html"><![CDATA[<h2 id="ZooKeeper是什么，可以用作什么"><a href="#ZooKeeper是什么，可以用作什么" class="headerlink" title="ZooKeeper是什么，可以用作什么"></a>ZooKeeper是什么，可以用作什么</h2><p>官方一句话描述”ZooKeeper: A Distributed Coordination Service for Distributed Applications”。</p>
 <p>ZooKeeper作为Hadoop项目中的一个子项目,是Hadoop集群管理的一个必不可少的模块,它主要用来解决分布式应用中经常遇到的数据管理问题，如集群管理、统一命名服务、分布式配置管理、分布式消息队列、分布式锁、分布式协调等，是分布式中一致性处理的框架的重要组件。</p>
@@ -207,9 +365,9 @@
     
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
-      <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
     
   </entry>
   
@@ -729,117 +887,6 @@
     
     
       <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>排查Java应用CPU使用率过高</title>
-    <link href="https://stefanma.github.io/2016/09/13/%E6%8E%92%E6%9F%A5Java%E5%BA%94%E7%94%A8CPU%E4%BD%BF%E7%94%A8%E7%8E%87%E8%BF%87%E9%AB%98/"/>
-    <id>https://stefanma.github.io/2016/09/13/排查Java应用CPU使用率过高/</id>
-    <published>2016-09-13T03:27:57.000Z</published>
-    <updated>2017-04-28T09:48:17.856Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="CPU使用率过高"><a href="#CPU使用率过高" class="headerlink" title="CPU使用率过高"></a>CPU使用率过高</h2><p>作为工程师我们会碰到Java应用某台机器cpu比较高的情况，在允许的情况下重启后基本上都会恢复正常，但是治标不治本，过上一段时间后还会出现CPU过高的问题。<br>一般的正常情况下：<br>应用使用CPU在 ：30%–40%<br>异常情况下：<br>CPU利用率在：80%—100%<br>一般Java应用CPU过高基本上有以下原因：<br>1.程序计算比较密集（计算密集型应用）；<br>2.程序死循环；<br>3.程序逻请求堵塞；<br>有的极端情况CPU甚至会飙到200%以上。</p>
-<p>不过有时候还是具体问题具体分析，懂得如何查找和分析问题的原因和步骤对于问题的解决有这重要意义。</p>
-<h2 id="定位和解决"><a href="#定位和解决" class="headerlink" title="定位和解决"></a>定位和解决</h2><p>碰到这样的问题该怎么定位和解决这类问题？</p>
-<h3 id="基本的步骤"><a href="#基本的步骤" class="headerlink" title="基本的步骤"></a>基本的步骤</h3><p>（1）通过top命令找到可疑进程PID，找出消耗资源最高的线程 ；<br><img src="/img/java_jvm_0.png" alt="示意图"><br>（2）通过ps aux | grep PID命令，可以进一步确定是tomcat进程出现了问题；<br><img src="/img/java_jvm_1.png" alt="示意图"><br>（3）通过ps -mp pid -o THREAD,tid,time 显示线程列表；<br><img src="/img/java_jvm_2.png" alt="示意图"><br>（4）通过printf “%x\n” tid 将需要的线程ID转换为16进制格式；<br>（5）通过jstack 命令打印线程的堆栈信息；</p>
-<blockquote>
-<p>jstack pid |grep tid -A 30 或者 jstack pid |grep tid -A 60</p>
-</blockquote>
-<p>jstack主要用来查看某个Java进程内的线程堆栈信息，jstack可以定位到线程堆栈，根据堆栈信息我们可以定位到具体代码，它在JVM性能调优中使用得非常多。</p>
-<p>语法格式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">jstack [option] pid</div><div class="line">jstack [option] executable core</div><div class="line">jstack [option] [server-id@]remote-hostname-or-ip</div></pre></td></tr></table></figure></p>
-]]></content>
-    
-    <summary type="html">
-    
-      排查Java应用CPU使用率过高，分析原因
-    
-    </summary>
-    
-      <category term="Linux" scheme="https://stefanma.github.io/categories/Linux/"/>
-    
-    
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
-      <category term="Linux" scheme="https://stefanma.github.io/tags/Linux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Linux查找命令小记</title>
-    <link href="https://stefanma.github.io/2016/09/09/Linux%E6%9F%A5%E6%89%BE%E5%91%BD%E4%BB%A4%E5%B0%8F%E8%AE%B0/"/>
-    <id>https://stefanma.github.io/2016/09/09/Linux查找命令小记/</id>
-    <published>2016-09-09T07:37:33.000Z</published>
-    <updated>2017-03-09T09:02:15.353Z</updated>
-    
-    <content type="html"><![CDATA[<p><strong>小记</strong><br>在Linux系统中查找文件，定位相关的路径是攻城狮们经常遇到的，Linux就向是一个相当大的仓库，需要及时的准确的找到自己想要的路径和文件，那就需要比较好的搜索工具；搜索工具好不好关系到定位问题的精准和效率。今天在DEV环境需要查找自己很久之前部署的Redis，文件路径由于时间比较久远已经忘记了，怎么精确的快速找到自己部署的应用。经历了一段小的寻找路程，虽然耗时不是那么多的时间，记录下来以便自己和看这篇文章的同学参考。</p>
-<h2 id="查找Redis部署路径"><a href="#查找Redis部署路径" class="headerlink" title="查找Redis部署路径"></a>查找Redis部署路径</h2><p>(1)首先我要确保我用的这台服务器上确实有Redis在运行着；<br>查看如下图命令和操作：<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# ps -ef|grep redis</div><div class="line">root      5705     1  0  2016 ?        05:32:56 ./redis-server *:6379    </div><div class="line">root     30763 29277  0 16:52 pts/3    00:00:00 grep redis</div><div class="line">[root@vm-test01 /]#</div></pre></td></tr></table></figure></p>
-<p>(2)使用find命令<br>查看如下图命令和操作：<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# find / -name redis-server</div><div class="line">/home/redis/redis-server</div></pre></td></tr></table></figure></p>
-<h2 id="Linux查找命令"><a href="#Linux查找命令" class="headerlink" title="Linux查找命令"></a>Linux查找命令</h2><p><strong>可以使用下面的一些命令来搜索：</strong><br><code>which        查看可执行文件的位置</code><br><code>whereis      查看文件的位置</code><br><code>locate       配合数据库查看文件位置</code><br><code>find         实际搜寻硬盘查询文件名称</code></p>
-<h3 id="Linux查找命令详解"><a href="#Linux查找命令详解" class="headerlink" title="Linux查找命令详解"></a>Linux查找命令详解</h3><p>1.which<br>语法: which 可执行文件名称</p>
-<figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]#  which passwd</div><div class="line">/usr/bin/passwd</div></pre></td></tr></table></figure>
-<blockquote>
-<p>which是通过 PATH环境变量到该路径内查找可执行文件，所以基本的功能是<code>寻找可执行文件</code>.</p>
-</blockquote>
-<p>2.whereis<br>语法: whereis [-bmsu] 文件或者目录名称<br>参数说明：<br>-b: 只找二进制文件<br>-m: 只找在说明文件manual路径下的文件<br>-s: 只找source源文件<br>-u: 没有说明文档的文件</p>
-<p>将和passwd文件相关的文件都查找出来<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]#  whereis passwd</div><div class="line">passwd: /usr/bin/passwd /etc/passwd /usr/share/man/man1/passwd.1.gz /usr/share/man/man5/passwd.5.gz</div></pre></td></tr></table></figure></p>
-<p>只将二进制文件查找出来<br><figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# whereis -b passwd</div><div class="line">passwd: /usr/bin/passwd /etc/passwd</div></pre></td></tr></table></figure></p>
-<blockquote>
-<p>和find相比，whereis查找的速度非常快，这是因为linux系统会将 系统内的所有文件都记录在一个数据库文件中，当使用whereis和locate时，会从数据库中查找数据，而不是像find命令那样，通 过遍历硬盘来查找，效率自然会很高。但是该数据库文件并不是实时更新，默认情况下时一星期更新一次，因此，我们在用whereis和locate查找文件时，有时会找到已经被删除的数据，或者刚刚建立文件，却无法查找到，原因就是因为数据库文件没有被更新。</p>
-</blockquote>
-<p>3.locate<br>语法: locate 文件或者目录名称</p>
-<figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]#  locate redis</div><div class="line">/home/quartz/webapps/quartz-service/WEB-INF/classes/spring/applicationContext-redis.xml</div><div class="line">/home/redis/dump.rdb</div><div class="line">/home/redis/redis-benchmark</div><div class="line">/home/redis/redis-cli</div><div class="line">/home/redis/redis-server</div><div class="line">/home/redis/redis.conf</div><div class="line">/home/redis/redis.pid</div><div class="line">/home/redis/redis1.conf</div><div class="line">/home/redis/redis_init_script</div><div class="line">/home/redis/temp-12938.rdb</div><div class="line">/home/redis/temp-3575.rdb</div><div class="line">···············</div></pre></td></tr></table></figure>
-<p>4.find<br>语法: find 路径 参数<br>参数说明：<br>时间查找参数：<br>-atime n :将n<em>24小时内存取过的的文件列出来<br>-ctime n :将n</em>24小时内改变、新增的文件或者目录列出来<br>-mtime n :将n*24小时内修改过的文件或者目录列出来<br>-newer file :把比file还要新的文件列出来</p>
-<p>名称查找参数：<br>-gid n       :寻找群组ID为n的文件<br>-group name  :寻找群组名称为name的文件<br>-uid n       :寻找拥有者ID为n的文件<br>-user name   :寻找用户者名称为name的文件<br>-name file   :寻找文件名为file的文件（可以使用通配符）</p>
-<figure class="highlight dust"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[root@vm-test01 /]# find / -name redis-server</div><div class="line">/home/redis/redis-server</div></pre></td></tr></table></figure>
-<blockquote>
-<p>find命令所查找的目录路径，是在硬盘上遍历查找，因此非常消耗硬盘的资源，而且效率也非常低。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      Linux查找命令的区别
-    
-    </summary>
-    
-      <category term="Linux" scheme="https://stefanma.github.io/categories/Linux/"/>
-    
-    
-      <category term="Linux" scheme="https://stefanma.github.io/tags/Linux/"/>
-    
-      <category term="Redis" scheme="https://stefanma.github.io/tags/Redis/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>让MySQL支持中文排序的实现方法</title>
-    <link href="https://stefanma.github.io/2016/09/07/%E8%AE%A9MySQL%E6%94%AF%E6%8C%81%E4%B8%AD%E6%96%87%E6%8E%92%E5%BA%8F%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95/"/>
-    <id>https://stefanma.github.io/2016/09/07/让MySQL支持中文排序的实现方法/</id>
-    <published>2016-09-07T02:57:36.000Z</published>
-    <updated>2017-03-10T11:16:25.597Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="让MySQL支持中文排序"><a href="#让MySQL支持中文排序" class="headerlink" title="让MySQL支持中文排序"></a>让MySQL支持中文排序</h2><p>如果在mysql中使用字符集为utf8，想要对中文字段用order by chinese_field 排序，那么出来的顺序并不是按照拼音排序的，不是我们想要的结果。</p>
-<h2 id="实现方法"><a href="#实现方法" class="headerlink" title="实现方法"></a>实现方法</h2><h3 id="（1）方案一"><a href="#（1）方案一" class="headerlink" title="（1）方案一"></a>（1）方案一</h3><p>对于包含中文的字段加上”binary”属性，使之作为二进制比较，例如将”name char(10)”改成”name char(10)binary”。<br>如果使用源码编译MySQL，可以编译MySQL时使用 –with–charset=gbk 参数，这样MySQL就会直接支持中文查找和排序。也可以用 extra-charsets=gb2312,gbk 来加入多个字符集。</p>
-<h3 id="（2）方案二"><a href="#（2）方案二" class="headerlink" title="（2）方案二"></a>（2）方案二</h3><p>可以在查询语句的order by部分使用 CONVERT 函数<br>对中文字段使用gbk编码排序：</p>
-<blockquote>
-<p>SELECT * FROM table ORDER BY CONVERT(chinese_field USING gbk );</p>
-</blockquote>
-<p>当然这需要你安装mysql时安装了gbk字符集，不然会报错：#1115 - Unknown character set: ‘gbk’</p>
-]]></content>
-    
-    <summary type="html">
-    
-      MySQL中文排序方法
-    
-    </summary>
-    
-      <category term="MySQL" scheme="https://stefanma.github.io/categories/mysql/"/>
-    
-    
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
-      <category term="MySQL" scheme="https://stefanma.github.io/tags/MySQL/"/>
     
   </entry>
   
