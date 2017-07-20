@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Google," />
+  <meta name="keywords" content="Redis,分布式," />
 
 
 
@@ -86,16 +86,19 @@
 
 
 
-<meta name="description" content="写程序好助手Google">
+<meta name="description" content="Redis集群的研究学习和探讨。Redis Cluster就是想要让一群的节点实现自治，有自我修复的功能，数据分片和负载均衡。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="优秀的程序员都在使用Google">
-<meta property="og:url" content="https://stefanma.github.io/2016/04/15/优秀的程序员都在使用Google/index.html">
+<meta property="og:title" content="Redis Cluster（集群）相关">
+<meta property="og:url" content="https://stefanma.github.io/2017/06/10/Redis-Cluster（集群）相关/index.html">
 <meta property="og:site_name" content="Stefan's Room">
-<meta property="og:description" content="写程序好助手Google">
-<meta property="og:updated_time" content="2017-06-15T03:09:53.772Z">
+<meta property="og:description" content="Redis集群的研究学习和探讨。Redis Cluster就是想要让一群的节点实现自治，有自我修复的功能，数据分片和负载均衡。">
+<meta property="og:image" content="https://stefanma.github.io/img/redis_cluster_1.jpg">
+<meta property="og:image" content="https://stefanma.github.io/img/redis_cluster_2.png">
+<meta property="og:updated_time" content="2017-07-19T08:29:04.399Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="优秀的程序员都在使用Google">
-<meta name="twitter:description" content="写程序好助手Google">
+<meta name="twitter:title" content="Redis Cluster（集群）相关">
+<meta name="twitter:description" content="Redis集群的研究学习和探讨。Redis Cluster就是想要让一群的节点实现自治，有自我修复的功能，数据分片和负载均衡。">
+<meta name="twitter:image" content="https://stefanma.github.io/img/redis_cluster_1.jpg">
 
 
 
@@ -123,13 +126,13 @@
 
 
 
-  <link rel="canonical" href="https://stefanma.github.io/2016/04/15/优秀的程序员都在使用Google/"/>
+  <link rel="canonical" href="https://stefanma.github.io/2017/06/10/Redis-Cluster（集群）相关/"/>
 
 
 
 
 
-  <title> 优秀的程序员都在使用Google | Stefan's Room </title>
+  <title> Redis Cluster（集群）相关 | Stefan's Room </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -295,7 +298,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2016/04/15/优秀的程序员都在使用Google/">
+  <link itemprop="mainEntityOfPage" href="https://stefanma.github.io/2017/06/10/Redis-Cluster（集群）相关/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Stefan Ma">
@@ -319,7 +322,7 @@
             
             
               
-                优秀的程序员都在使用Google
+                Redis Cluster（集群）相关
               
             
           </h2>
@@ -334,8 +337,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-15T10:56:18+08:00">
-                2016-04-15
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-06-10T15:48:40+08:00">
+                2017-06-10
               </time>
             
 
@@ -357,8 +360,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Google/" itemprop="url" rel="index">
-                    <span itemprop="name">Google</span>
+                  <a href="/categories/Redis/" itemprop="url" rel="index">
+                    <span itemprop="name">Redis</span>
                   </a>
                 </span>
 
@@ -381,7 +384,7 @@
 
           
               <div class="post-description">
-                  写程序好助手Google
+                  Redis集群的研究学习和探讨。Redis Cluster就是想要让一群的节点实现自治，有自我修复的功能，数据分片和负载均衡。
               </div>
           
 
@@ -396,11 +399,17 @@
       
 
       
-        <blockquote>
-<p>“能在书本上简单查到的东西永远不要放进你的记忆里。”</p>
+        <h2 id="Redis-Cluster"><a href="#Redis-Cluster" class="headerlink" title="Redis Cluster"></a>Redis Cluster</h2><p>Redis Cluster在设计的时候，就考虑到了去中心化，去中间件，也就是说，集群中的每个节点都是平等的关系，都是对等的，每个节点都保存各自的数据和整个集群的状态。每个节点都和其他所有节点连接，而且这些连接保持活跃，这样就保证了我们只需要连接集群中的任意一个节点，就可以获取到其他节点的数据。</p>
+<p>集群拓扑:<br><img src="/img/redis_cluster_1.jpg" alt="示意图"></p>
+<p>在官方文档Cluster Spec[<a href="https://redis.io/topics/cluster-spec]中，作者详细介绍了Redis集群为什么要设计成现在的样子。最核心的目标有三个：" target="_blank" rel="external">https://redis.io/topics/cluster-spec]中，作者详细介绍了Redis集群为什么要设计成现在的样子。最核心的目标有三个：</a><br>1.性能：这是Redis赖以生存的看家本领，增加集群功能后当然不能对性能产生太大影响，所以Redis采取了P2P而非Proxy方式、异步复制、客户端重定向等设计，而牺牲了部分的一致性、使用性。<br>2.水平扩展：集群的最重要能力当然是扩展，文档中称可以线性扩展到1000结点。<br>3.可用性：在Cluster推出之前，可用性要靠Sentinel保证。有了集群之后也自动具有了Sentinel的监控和自动Failover能力。</p>
+<p>Cluster经典架构:<br><img src="/img/redis_cluster_2.png" alt="示意图"></p>
+<blockquote>
+<p>Redis Cluster研究和实践：<br><a href="https://www.zybuluo.com/phper/note/195558" target="_blank" rel="external">https://www.zybuluo.com/phper/note/195558</a><br><a href="http://blog.csdn.net/dc_726/article/details/48552531" target="_blank" rel="external">http://blog.csdn.net/dc_726/article/details/48552531</a></p>
+<p>Redis Cluster集群安装和配置：<br><a href="http://blog.51yip.com/nosql/1725.html" target="_blank" rel="external">http://blog.51yip.com/nosql/1725.html</a></p>
+<p>生产环境上Redis Cluster大规模实践经验：<br><a href="http://bbs.redis.cn/forum.php?mod=viewthread&amp;tid=728" target="_blank" rel="external">http://bbs.redis.cn/forum.php?mod=viewthread&amp;tid=728</a></p>
+<p>Redis Cluster官方文档和Redis中文官方文档：<br><a href="https://redis.io/topics/cluster-tutorial" target="_blank" rel="external">https://redis.io/topics/cluster-tutorial</a><br><a href="http://www.redis.cn/topics/cluster-tutorial.html" target="_blank" rel="external">http://www.redis.cn/topics/cluster-tutorial.html</a></p>
+<p>Redis Cluster的缺点和架构优化：<br><a href="http://blog.csdn.net/dc_726/article/details/48733265" target="_blank" rel="external">http://blog.csdn.net/dc_726/article/details/48733265</a></p>
 </blockquote>
-<p>在程序员界众所周知，百度在搜索技术资料方面有天生的白痴特性，而且GitHub的博客屏蔽了百度蜘蛛的抓取，基本上身边优秀的程序员或者架构师极力推荐搜索资料的时候要使用Google，基本上搜索到的内容前三页可以覆盖你所要解决的问题的情况。</p>
-<p>用Google可以查到GitHub上内容，接触了开源社区，Google + Stackoverflow + GitHub就再也没有解决不了的问题了，而某种意义上，开发其实主要就是解决问题的能力。</p>
 
       
     </div>
@@ -424,7 +433,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Google/" rel="tag"># Google</a>
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+            <a href="/tags/分布式/" rel="tag"># 分布式</a>
           
         </div>
       
@@ -433,15 +444,15 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2017/06/05/Redis性能问题排查解决手册/" rel="next" title="Redis性能问题排查解决手册">
+                <i class="fa fa-chevron-left"></i> Redis性能问题排查解决手册
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/05/03/hello-world/" rel="prev" title="Hello World">
-                Hello World <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -488,8 +499,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.gif"
@@ -563,6 +583,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-Cluster"><span class="nav-number">1.</span> <span class="nav-text">Redis Cluster</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
     </div>
