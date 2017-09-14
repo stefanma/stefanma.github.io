@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://stefanma.github.io/"/>
-  <updated>2017-07-19T08:29:04.399Z</updated>
+  <updated>2017-09-13T09:49:58.412Z</updated>
   <id>https://stefanma.github.io/</id>
   
   <author>
@@ -14,6 +14,51 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>理解一致性哈希算法（Consistent Hashing）</title>
+    <link href="https://stefanma.github.io/2017/08/01/%E7%90%86%E8%A7%A3%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E7%AE%97%E6%B3%95%EF%BC%88Consistent-Hashing%EF%BC%89/"/>
+    <id>https://stefanma.github.io/2017/08/01/理解一致性哈希算法（Consistent-Hashing）/</id>
+    <published>2017-08-01T08:44:30.000Z</published>
+    <updated>2017-09-13T09:49:58.412Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><h3 id="算法背景"><a href="#算法背景" class="headerlink" title="算法背景"></a>算法背景</h3><p>一致性哈希算法在1997年由麻省理工学院提出的一种分布式哈希（DHT）实现算法，设计目标是为了解决因特网中的热点(Hot pot)问题，初衷和CARP十分类似。一致性哈希修正了CARP使用的简单哈希算法带来的问题，使得分布式哈希（DHT）可以在P2P环境中真正得到应用。 </p>
+<h3 id="一致性Hash性质"><a href="#一致性Hash性质" class="headerlink" title="一致性Hash性质"></a>一致性Hash性质</h3><p>考虑到分布式系统每个节点都有可能失效，并且新的节点很可能动态的增加进来，如何保证当系统的节点数目发生变化时仍然能够对外提供良好的服务，这是值得考虑的，尤其实在设计分布式缓存系统时，如果某台服务器失效，对于整个系统来说如果不采用合适的算法来保证一致性，那么缓存于系统中的所有数据都可能会失效（即由于系统节点数目变少，客户端在请求某一对象时需要重新计算其hash值（通常与系统中的节点数目有关），由于hash值已经改变，所以很可能找不到保存该对象的服务器节点），因此一致性hash就显得至关重要，良好的分布式cahce系统中的一致性hash算法应该满足以下几个方面：</p>
+<ul>
+<li><p>平衡性(Balance)<br>平衡性是指哈希的结果能够尽可能分布到所有的缓冲中去，这样可以使得所有的缓冲空间都得到利用。很多哈希算法都能够满足这一条件。</p>
+</li>
+<li><p>单调性(Monotonicity)<br>单调性是指如果已经有一些内容通过哈希分派到了相应的缓冲中，又有新的缓冲区加入到系统中，那么哈希的结果应能够保证原有已分配的内容可以被映射到新的缓冲区中去，而不会被映射到旧的缓冲集合中的其他缓冲区。简单的哈希算法往往不能满足单调性的要求，如最简单的线性哈希：x = (ax + b) mod (P)，在上式中，P表示全部缓冲的大小。不难看出，当缓冲大小发生变化时(从P1到P2)，原来所有的哈希结果均会发生变化，从而不满足单调性的要求。哈希结果的变化意味着当缓冲空间发生变化时，所有的映射关系需要在系统内全部更新。而在P2P系统内，缓冲的变化等价于Peer加入或退出系统，这一情况在P2P系统中会频繁发生，因此会带来极大计算和传输负荷。单调性就是要求哈希算法能够应对这种情况。</p>
+</li>
+<li><p>分散性(Spread)<br>在分布式环境中，终端有可能看不到所有的缓冲，而是只能看到其中的一部分。当终端希望通过哈希过程将内容映射到缓冲上时，由于不同终端所见的缓冲范围有可能不同，从而导致哈希的结果不一致，最终的结果是相同的内容被不同的终端映射到不同的缓冲区中。这种情况显然是应该避免的，因为它导致相同内容被存储到不同缓冲中去，降低了系统存储的效率。分散性的定义就是上述情况发生的严重程度。好的哈希算法应能够尽量避免不一致的情况发生，也就是尽量降低分散性。</p>
+</li>
+<li><p>负载(Load)<br>负载问题实际上是从另一个角度看待分散性问题。既然不同的终端可能将相同的内容映射到不同的缓冲区中，那么对于一个特定的缓冲区而言，也可能被不同的用户映射为不同的内容。与分散性一样，这种情况也是应当避免的，因此好的哈希算法应能够尽量降低缓冲的负荷。</p>
+</li>
+<li><p>平滑性(Smoothness)<br>平滑性是指缓存服务器的数目平滑改变和缓存对象的平滑改变是一致的。</p>
+</li>
+</ul>
+<h2 id="原理与基本概念"><a href="#原理与基本概念" class="headerlink" title="原理与基本概念"></a>原理与基本概念</h2><h3 id="将机器通过Hash算法映射到环上"><a href="#将机器通过Hash算法映射到环上" class="headerlink" title="将机器通过Hash算法映射到环上"></a>将机器通过Hash算法映射到环上</h3><p>1.按照常用的hash算法来将对应的key哈希到一个具有2^32次方个桶的空间中，即0~(2^32)-1的数字空间中。现在我们可以将这些数字头尾相连，想象成一个闭合的环形。简单来说，一致性哈希将整个哈希值空间组织成一个虚拟的圆环。<br>这个长度为2^32次方的一致性Hash环通常使用二叉查找树实现，Hash查找过程实际上是在二叉査找树中查找不小于査找数的最小数值。当然这个二叉树的最右边叶子节点和最左边的叶子节点相连接，构成环。<br>如下图：<br>‘整个哈希空间’<br><img src="/img/consist_hash_1.png" alt="示意图"><br>整个空间按顺时针方向组织。0和2^32-1在零点中方向重合。</p>
+<p>2.将各个服务器使用Hash进行一个哈希，具体可以选择服务器的IP或主机名作为关键字进行哈希，这样每台机器就能确定其在哈希环上的位置，这里假设将上文中四台服务器使用ip地址哈希后在环空间的位置如下：<br><img src="/img/consist_hash_2.png" alt="示意图"></p>
+<p>3.使用如下算法定位数据访问到相应服务器：将数据key使用相同的函数Hash计算出哈希值，并确定此数据在环上的位置，然后以顺时针的方向计算，将所有对象存储到离自己最近的机器中。<br>如有Object A、Object B、Object C、Object D四个数据对象，经过哈希计算后，在环空间上的位置如下：<br><img src="/img/consist_hash_3.png" alt="示意图"><br>根据一致性哈希算法，Object A会被定为到Node A上，Object B被定为到Node B上，Object C被定为到Node C上，Object D被定为到Node D上。</p>
+<h3 id="一致性哈希算法的容错性和可扩展性"><a href="#一致性哈希算法的容错性和可扩展性" class="headerlink" title="一致性哈希算法的容错性和可扩展性"></a>一致性哈希算法的容错性和可扩展性</h3><p>1.现假设Node C不幸宕机，可以看到此时对象A、B、D不会受到影响，只有C对象被重定位到Node D。一般的，在一致性哈希算法中，如果一台服务器不可用，则受影响的数据仅仅是此服务器到其环空间中前一台服务器（即沿着逆时针方向行走遇到的第一台服务器）之间数据，其它不会受到影响。<br>如果在系统中增加一台服务器Node X.<br>此时对象Object A、B、D不受影响，只有对象C需要重定位到新的Node X 。一般的，在一致性哈希算法中，如果增加一台服务器，则受影响的数据仅仅是新服务器到其环空间中前一台服务器（即沿着逆时针方向行走遇到的第一台服务器）之间数据，其它数据也不会受到影响。<br><img src="/img/consist_hash_4.png" alt="示意图"></p>
+<p>综上所述，一致性哈希算法对于节点的增减都只需重定位环空间中的一小部分数据，具有较好的容错性和可扩展性。</p>
+<h3 id="平衡性"><a href="#平衡性" class="headerlink" title="平衡性"></a>平衡性</h3><p>1.一致性哈希算法满足了单调性和负载均衡的特性以及一般hash算法的分散性，但这还并不能当做其被广泛应用的原由，因为还缺少了平衡性。如果一致性哈希算法在服务节点太少时，容易因为节点分部不均匀而造成数据倾斜问题。例如系统中只有两台服务器，其环分布如下：<br><img src="/img/consist_hash_5.png" alt="示意图"><br>此时必然造成大量数据集中到Node A上，而只有极少量会定位到Node B上。为了解决这种数据倾斜问题，一致性哈希算法引入了虚拟节点机制，即对每一个服务节点计算多个哈希，每个计算结果位置都放置一个此服务节点，称为虚拟节点。</p>
+<p>“虚拟节点”（virtual node）是实际节点（机器）在Hash空间的复制品（replica），一实际个节点（机器）对应了若干个“虚拟节点”，这个对应个数也成为“复制个数”，“虚拟节点”在Hash空间中以Hash值排列。</p>
+<p>2.具体做法可以在服务器ip或主机名的后面增加编号来实现。例如上面的情况，可以为每台服务器计算三个虚拟节点，于是可以分别计算 “Node A#1”、“Node A#2”、“Node A#3”、“Node B#1”、“Node B#2”、“Node B#3”的哈希值，于是形成六个虚拟节点：<br><img src="/img/consist_hash_6.png" alt="示意图"><br>同时数据定位算法不变，只是多了一步虚拟节点到实际节点的映射，例如定位到“Node A#1”、“Node A#2”、“Node A#3”三个虚拟节点的数据均定位到Node A上。这样就解决了服务节点少时数据倾斜的问题。在实际应用中，通常将虚拟节点数设置为32甚至更大，因此即使很少的服务节点也能做到相对均匀的数据分布。</p>
+<p>3.通过虚拟节点的引入，对象的分布就比较均衡了。那么在实际操作中，正真的对象查询是对象从Hash到虚拟节点到实际节点的转换。<br>如下图：<br><img src="/img/consist_hash_7.png" alt="示意图"></p>
+]]></content>
+    
+    <summary type="html">
+    
+      理解一致性哈希算法
+    
+    </summary>
+    
+      <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
+    
+    
+      <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+  </entry>
   
   <entry>
     <title>Redis Cluster（集群）相关</title>
@@ -286,7 +331,7 @@
     <link href="https://stefanma.github.io/2017/05/27/Apache-Geode%E7%9A%84%E7%95%A5%E7%9F%A5%E4%BB%A5%E5%8F%8A%E4%B8%BB%E8%A6%81%E7%89%B9%E7%82%B9/"/>
     <id>https://stefanma.github.io/2017/05/27/Apache-Geode的略知以及主要特点/</id>
     <published>2017-05-27T03:44:06.000Z</published>
-    <updated>2017-07-20T06:49:59.560Z</updated>
+    <updated>2017-07-20T06:53:50.477Z</updated>
     
     <content type="html"><![CDATA[<h2 id="Apache-Geode"><a href="#Apache-Geode" class="headerlink" title="Apache Geode"></a>Apache Geode</h2><p>Apache Geode官网介绍<br><img src="/img/apache_geode_1.png" alt="示意图"></p>
 <p>2016年11月21日，Apache软件基金会（ASF）宣布Apache Geode已从 Apache 孵化器毕业成为顶级项目（TLP），表明该项目的社区和产品已根据ASF的精英流程和原则得到良好管理。<br>Apache Geode是一个数据管理平台，提供实时的、一致的、贯穿整个云架构地访问数据关键型应用，首先它是一个基于JVM的NoSQL分布式数据处理平台，同时集中间件、缓存、消息队列、事件处理引擎、NoSQL数据库于一身的分布式内存数据处理平台。可用来进行完成分布式缓存、数据持久化、分布式事物、动态扩展等功能。最初由GemStone Systems公司开发，商标为 GemFire。 此项技术初期被广泛应用在金融领域，用于华尔街交易平台，作为事务性、 低延时的数据引擎。2015年4月将代码提交给Apache孵化器作为孵化项目。目前 Apache Geode有超过600家大中型企业级用户, 主要是必须满足低延时和24x7高可靠要求的，高可扩展的关键业务应用系统。</p>
@@ -312,7 +357,7 @@
 <li>可快速并行恢复的持久化；</li>
 <li>快速内存存储、优化的大堆内存、数据压缩、磁盘溢出回收和数据超时机制；</li>
 <li>分布式位置感知功能；</li>
-<li>分布式事物ACID；</li>
+<li>分布式事务ACID；</li>
 <li>支持类SQL和索引；</li>
 <li>服务器可以将数据事件通知客户端，同步或者异步的响应客户端，保证事件顺序；</li>
 <li>高可扩展高健壮性的集群技术，失败检测、网络分区检测。</li>
@@ -449,9 +494,9 @@
       <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
     
     
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
       <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
     
@@ -494,9 +539,9 @@
       <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
     
     
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
       <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
     
@@ -539,9 +584,9 @@
       <category term="分布式" scheme="https://stefanma.github.io/categories/distributed/"/>
     
     
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
       <category term="分布式" scheme="https://stefanma.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"/>
+    
+      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
     
       <category term="ZooKeeper" scheme="https://stefanma.github.io/tags/ZooKeeper/"/>
     
@@ -863,42 +908,6 @@
     <summary type="html">
     
       并发程序的不变模式
-    
-    </summary>
-    
-      <category term="Java" scheme="https://stefanma.github.io/categories/java/"/>
-    
-    
-      <category term="Java" scheme="https://stefanma.github.io/tags/Java/"/>
-    
-      <category term="设计模式" scheme="https://stefanma.github.io/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>死磕并发--并发程序设计模式（三）</title>
-    <link href="https://stefanma.github.io/2016/09/23/%E6%AD%BB%E7%A3%95%E5%B9%B6%E5%8F%91-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%B8%89%EF%BC%89/"/>
-    <id>https://stefanma.github.io/2016/09/23/死磕并发-并发程序设计模式（三）/</id>
-    <published>2016-09-23T09:53:10.000Z</published>
-    <updated>2017-04-13T12:30:22.639Z</updated>
-    
-    <content type="html"><![CDATA[<h2 id="Guarded-Suspension模式"><a href="#Guarded-Suspension模式" class="headerlink" title="Guarded Suspension模式"></a>Guarded Suspension模式</h2><p>设想一个场景，服务器可能在短时间内承受大量的客户端的请求，客户端的请求数量已经超过了服务器本身的即时处理能力，而服务端又不能丢失任何一个客户请求。此时最佳的方案莫过于就是让客户端的请求进行排队，有服务端一个接一个的处理，这样即可以保证客户端所有的请求均不丢失，同时也避免服务器由于同时处理太多的请求而崩溃。<br>Guarded Suspension解释为保护暂停，核心的思想是仅当服务端进程准备好时，才会提供服务。</p>
-<h2 id="Guarded-Suspension的理解和实现"><a href="#Guarded-Suspension的理解和实现" class="headerlink" title="Guarded Suspension的理解和实现"></a>Guarded Suspension的理解和实现</h2><h3 id="Guarded-Suspension模式的结构"><a href="#Guarded-Suspension模式的结构" class="headerlink" title="Guarded Suspension模式的结构"></a>Guarded Suspension模式的结构</h3><p>Request对象封装了客户端的请求。RequestQueue表示客户端的请求队列，由ClientThread和ServerThread共同维护。其中，ClientThread负责不断的发送请求，并将请求对象放入请求队列中。ServerThread根据自身状态，在有能力的处理请求时，从RequestQueue中提取请求对象加以处理。<br>工作流程图如下：<br><img src="/img/guarded-suspension_0.png" alt="示意图"></p>
-<blockquote>
-<p>Guarded Suspension模式可以确保系统仅有在有能力处理某个任务时，才会处理该任务。当系统没有能力处理任务时，它会暂存任务信息等待系统空闲。</p>
-</blockquote>
-<h3 id="Guarded-Suspension模式的实现"><a href="#Guarded-Suspension模式的实现" class="headerlink" title="Guarded Suspension模式的实现"></a>Guarded Suspension模式的实现</h3><p><1>RequestPoJo类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RequestPoJo</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> String name;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">RequestPoJo</span><span class="params">(String name)</span> </span>&#123;</div><div class="line">		<span class="keyword">this</span>.name = name;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">return</span> name;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">return</span> <span class="string">"RequestPoJo [name="</span> + name + <span class="string">"]"</span>;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></1></p>
-<p><2>RequestQueue类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RequestQueue</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> LinkedList&lt;RequestPoJo&gt; queue = <span class="keyword">new</span> LinkedList&lt;&gt;();</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> RequestPoJo <span class="title">getRequest</span><span class="params">()</span></span>&#123;</div><div class="line">		<span class="comment">//等到新的Request加入</span></div><div class="line">		<span class="keyword">while</span>(queue.size() == <span class="number">0</span>)&#123;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				wait();</div><div class="line">			&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">				<span class="comment">// TODO Auto-generated catch block</span></div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">return</span> (RequestPoJo) queue.remove();</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">addRequest</span><span class="params">(RequestPoJo request)</span></span>&#123;</div><div class="line">		<span class="comment">//添加Request</span></div><div class="line">		queue.add(request);</div><div class="line">		notifyAll();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></2></p>
-<p><3>ClientThread类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ClientThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line">	</div><div class="line">	<span class="keyword">private</span> RequestQueue requestQueue;</div><div class="line"></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ClientThread</span><span class="params">(RequestQueue requestQueue, String name)</span> </span>&#123;</div><div class="line">		<span class="keyword">super</span>(name);</div><div class="line">		<span class="keyword">this</span>.requestQueue = requestQueue;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</div><div class="line">			RequestPoJo request = <span class="keyword">new</span> RequestPoJo(<span class="string">"Request ID"</span>+i+<span class="string">"Thread_name:"</span>+Thread.currentThread().getName());</div><div class="line">			requestQueue.addRequest(request);</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				Thread.sleep(<span class="number">10</span>);</div><div class="line">			&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">			System.out.println(Thread.currentThread().getName()+<span class="string">" request end."</span>);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></3></p>
-<p><4>ServerThread类<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ServerThread</span> <span class="keyword">extends</span> <span class="title">Thread</span> </span>&#123;</div><div class="line"></div><div class="line">	<span class="keyword">private</span> RequestQueue requestQueue;</div><div class="line">	</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ServerThread</span><span class="params">(RequestQueue requestQueue, String name)</span> </span>&#123;</div><div class="line">		<span class="keyword">super</span>(name);</div><div class="line">		<span class="keyword">this</span>.requestQueue = requestQueue;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">		<span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</div><div class="line">			RequestPoJo request = requestQueue.getRequest();</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				Thread.sleep(<span class="number">2000</span>);</div><div class="line">			&#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</div><div class="line">				<span class="comment">// TODO Auto-generated catch block</span></div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">			System.out.println(Thread.currentThread().getName()+<span class="string">" handles,"</span>+request);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></4></p>
-<blockquote>
-<p>Guarded Suspension模式可以在一定程度上环节系统的压力，它可以将系统的负载在时间轴上均匀的分配，有效的降低系统的瞬时负载，对提高系统的抗压力和稳定性有一定的帮助。</p>
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      并发程序的Guarded Suspension模式
     
     </summary>
     
